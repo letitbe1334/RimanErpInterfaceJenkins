@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrder.UniverseSalesOrderMapper">
+    <select id="getSalesOrders" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderDto">
+    		/* SalesOrder.getSalesOrders */
+        /**
+          참고 : logistic_inout(출고) 테이블은 sales_order 테이블과 1:1관계
+          2022년 05월 마이그된 데이터 중 일부 1:N 데이터가 존재함(2660건)
+         */
+        SELECT 'UNIVERSE' AS SenderBusinessSystemName
+              /** 주문 기본 정보 */
+              ,so.sales_order_no AS PurchaseOrderByCustomer --  주문번호
+              <!--,'20230724000026' AS PurchaseOrderByCustomer--> --  주문번호
+              ,'TA' AS SalesOrderType
+              ,'3100' AS SalesOrganization
+              ,CASE WHEN som.store_login_id = #{mismatchStoreUniverse} THEN '20'
+                    ELSE '10'
+                END AS DistributionChannel -- universe 매칭/비매칭
+              ,CASE --  주문유형
+                   WHEN so.sales_order_type = 'SALESPERSON_MEMBER' THEN 'ZDD' --  판매원-회원
+                   WHEN so.sales_order_type = 'SALESPERSON_CONSUMER' THEN 'ZDD' --  판매원-소비자
+                   WHEN so.sales_order_type = 'RECEIVING_BASIC_INVENTORY' THEN 'ZPO' --  기초재고-수령
+                   WHEN so.sales_order_type = 'NOT_RECEIVED_BASIC_INVENTORY' THEN 'ZZ' --  기초재고-미수령
+                END AS ZSalesType
+              -- ,'INC11485' AS SoldToParty
+              ,som.store_login_id AS SoldToParty
+              ,DATE_FORMAT(IFNULL(loi.delivery_order_datetime, so.approval_date), '%Y-%m-%dT%H:%i:%s') AS RequestedDeliveryDate    --  미 출고지시건들은 배송요청일 없음
+              ,DATE_FORMAT(so.order_date, '%Y-%m-%dT%H:%i:%s') AS CustomerPurchaseOrderDate
+              ,DATE_FORMAT(so.approval_date, '%Y-%m-%dT%H:%i:%s') AS SalesOrderDate
+              ,CASE
+                   WHEN py.payment_type = 'CREDITCARD' THEN '10'
+                   WHEN py.payment_type = 'VIRTUALACCOUNT' THEN '12'
+                   WHEN py.payment_type = 'MYPAY' THEN '15'
+                   WHEN py.payment_type = 'MILEAGE' THEN '14'
+                   WHEN py.payment_type = 'SIMPLE' THEN '18'
+                   WHEN py.payment_type = 'CREDITCARD_MILEAGE' THEN '20'
+                   WHEN py.payment_type = 'VIRTUALACCOUNT_MILEAGE' THEN '21'
+                   WHEN py.payment_type = 'SIMPLE_MILEAGE' THEN '22'
+                END AS AdditionalCustomerGroup3
+              ,som.branch_login_id AS ZBINC
+              ,som.center_login_id AS ZTINC
+              ,NULL AS ZRECOM
+              ,NULL AS ZGRECOM
+              /** 배송비는 총 매출액 99000원 미만인 경우 2500원 발생, 99000이상 배송비 0원 */
+              ,'ZDC1' AS DeliveryType
+              ,ROUND(py.delivery_charge / 1.1) AS DeliveryRateValue -- 10% 부가세 빼고 소수점 한자리에서 반올림
+              /** 부가 정보 */
+              ,so.sales_order_id
+              ,so.payment_id
+          FROM `universe-order`.sales_order so
+         INNER JOIN `universe-order`.order_aggregation oa ON oa.order_no = so.sales_order_no
+         INNER JOIN `universe-order`.payment py ON so.payment_id = py.payment_id 
+         INNER JOIN `universe-order`.sales_order_member som ON so.sales_order_id = som.sales_order_id
+          LEFT JOIN `universe-order`.logistic_inout loi ON so.delivery_no = loi.delivery_no
+                                                       AND loi.delete_yn = 'N'
+         WHERE so.delete_yn = 'N'
+           AND oa.order_work_type = 'SALE'
+           /**
+             PAYMENT_COMPLETED(결제완료) : 주문생성
+             ORDER_CANCEL(결제취소) : 배치 스케줄 주문생성, 주문취소 JOB이 동시에 도는 경우로 인하여 주문취소 단계이지만 주문생성을 먼저 동작하기 위함
+             DELIVERY_READY(출고대기) : 배치 스케줄 주문생성, 출고 JOB이 동시에 도는 경우로 인하여 출고 단계이지만 주문생성을 먼저 동작하기 위함
+            */
+           AND oa.order_status IN ('PAYMENT_COMPLETED', 'ORDER_CANCEL', 'DELIVERY_READY')
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
+                           WHERE so.sales_order_no = iso.purchase_order_by_customer)
+           <!--AND so.created_datetime between #{startDatetime} and #{endDatetime}-->
+           <!--AND so.sales_order_no in ('20230711007606', '20230711007702')-->
+    </select>
+	
+    <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
+        /* SalesOrder.getSalesOrderItems */
+        SELECT (row_number() over(order by sop.sales_order_product_id)) * 10 as SalesOrderItem
+              ,IFNULL(sopp.sales_order_product_package_id, 0) AS sales_order_product_package_id
+              ,sop.sales_order_product_id
+              ,coalesce(pd2.product_code, pd.product_code) AS Material
+              <!--,'20110001' AS Material-->
+              <!--,'20110101' AS Material-->
+              ,coalesce(sop.order_qty * sopp.package_qty, sop.order_qty) AS RequestedQuantity
+              ,'EA' AS RequestedQuantityUnit
+          FROM `universe-order`.sales_order_product sop
+         INNER JOIN `universe-order`.product pd ON sop.product_id = pd.product_id
+          LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
+          LEFT JOIN `universe-order`.product pd2 ON sopp.product_package_product_id = pd2.product_id
+         WHERE sop.sales_order_id = #{salesOrderId}
+    </select>
+	
+    <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">
+        /* SalesOrder.getSalesOrderPayments */
+        SELECT row_number() over(order by pym.payment_method_id) AS ZSequence
+              ,pym.payment_method AS ZPaymentMethod -- 결제방법
+              ,pym.price AS ZAmount   --  결제금액
+              ,'KRW' AS ZCurrency   -- 통화단위
+          FROM `universe-order`.payment_method pym
+         WHERE pym.payment_id = #{paymentId}
+    </select>
+</mapper>

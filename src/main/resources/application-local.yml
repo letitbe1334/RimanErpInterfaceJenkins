@@ -1,0 +1,64 @@
+spring:
+    config:
+        activate:
+            on-profile: local
+    erpapi:
+        datasource:
+            dbms: erpapi
+            driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+            driver: com.mysql.cj.jdbc.Driver
+            jdbc-url: jdbc:log4jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
+#            jdbc-url: jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
+            username: andami_dhkim
+            password: Andami34!
+            hikary:
+              maximum-pool-size: 10
+              connection-test-query: SELECT 1
+              minimum-idle: 5
+              connection-timeout: 100000
+#            driver: org.mariadb.jdbc.Driver
+#            jdbc-url: jdbc:mariadb://psmtest.cqjjk1dwdjyl.ap-northeast-2.rds.amazonaws.com:3306/psm?allowMultiQueries=true&amp;useUnicode=yes&amp;characterEncoding=UTF-8&amp;autoReconnect=true
+#            username: admin
+#            password: psm2022!
+    #        mapper-locations: classpath:sqlmap/**/*.xml
+    #        mybatis-setting-locations: classpath:sqlmap/sqlmap-config.xml
+    security:
+        oauth2:
+            client:
+                endpoint: https://int-test-01.it-cpi006-rt.cfapps.jp10.hana.ondemand.com
+                registration:
+                    riman:
+                        client-id: sb-6d1fa376-3646-474a-83af-bf18d16af027!b4317|it-rt-int-test-01!b134
+                        client-secret: 7cc88252-d8a9-4e13-adfb-f6a24aa6630a$p-s5KH1-NF8hDzG0dMZI7MMSxWaNbZe9NfcHucC40c0=
+                        authorization-grant-type: client_credentials
+                        client-authentication-method: client_secret_post
+                provider:
+                    riman:
+                        token-uri: https://int-test-01.authentication.jp10.hana.ondemand.com/oauth/token
+                        authorization-uri: https://int-test-01.it-cpi006-rt.cfapps.jp10.hana.ondemand.com
+  
+    
+sales:
+    order:
+        host: https://my405068.s4hana.cloud.sap
+        uri: /sap/opu/odata/sap/ZAPI_SALES_CANCEL/salesCancel
+        userName: Z_SO_TEST_USER
+        password: VqiBfhQaQNN}MKyQljnvUocmAzvGw3tNroTaPCiW
+#        endpointHost: https://my404942-api.s4hana.cloud.sap
+#        uri: /sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder
+#        userName: Z_SO_TEST_USER
+#        password: rjfbBEnqWrjuwzNYWhnwZ}JuRLeyXwV9BcQRRcmF
+    
+    
+quartz.enabled: true
+job.frequency: 20000
+
+
+mismatch:
+  store:
+    id:
+      universe: INC00001
+      jupiter: INC11014
+    seq:
+      universe: 2
+      jupiter: 10121

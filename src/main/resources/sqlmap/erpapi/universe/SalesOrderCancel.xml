@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrderCancel.UniverseSalesOrderCancelMapper">
+  	<select id="getSalesOrderCancels" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelDto">
+    		/* SalesOrderCancel.getSalesOrderCancels */
+        SELECT so.sales_order_no AS PurchaseOrderByCustomer --  주문번호
+              ,IFNULL(iso.sales_order, '') AS SalesOrder
+              ,so.sales_order_id
+              ,so.payment_id
+          FROM `universe-order`.order_aggregation oa
+         INNER JOIN `universe-order`.sales_order so ON oa.order_no = so.sales_order_no
+         INNER JOIN `erp-system`.if_sales_order iso ON so.sales_order_no = iso.purchase_order_by_customer
+         WHERE so.delete_yn = 'N'
+           AND oa.order_work_type = 'SALE'
+           AND oa.order_status = 'ORDER_CANCEL'
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_cancel isoc
+                           WHERE so.sales_order_no = isoc.purchase_order_by_customer)
+           <!--AND so.cancel_date between #{startDate} and #{endDate}--> --   전일 ~ 당일
+           <!--AND so.sales_order_no = '20230713007907'-->
+    </select>
+	
+    <select id="getSalesOrderCancelItems" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelItemDto">
+        /* SalesOrderCancel.getSalesOrderCancelItems */
+        SELECT isoi.sales_order_item AS SalesOrderItem
+              ,'70' AS SalesDocumentRjcnReason
+          FROM `universe-order`.sales_order_product sop
+         INNER JOIN `universe-order`.product pd on sop.product_id = pd.product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON sop.sales_order_product_id = isoi.sales_order_product_id
+         WHERE sop.delete_yn = 'N'
+           AND sop.sales_order_id = #{salesOrderId}
+    </select>
+  
+    <select id="getSalesOrderCancelPayments" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelPaymentDto">
+        /* SalesOrderCancel.getSalesOrderCancelPayments */
+        SELECT row_number() over(order by pym.payment_method_id) AS ZSequence
+              ,pym.payment_method AS ZPaymentMethod -- 결제방법
+              ,pym.price AS ZAmount   --  결제금액
+              ,'KRW' AS ZCurrency   -- 통화단위
+          FROM `universe-order`.payment_method pym
+         WHERE pym.payment_id = #{paymentId}
+    </select>
+</mapper>

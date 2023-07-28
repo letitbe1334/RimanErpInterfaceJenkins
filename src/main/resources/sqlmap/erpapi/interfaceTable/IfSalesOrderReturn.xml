@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrderReturn.IfSalesOrderReturnMapper">
+    <insert id="insertInterfaceSalesOrderReturn" parameterType="biz.riman.erp.batch.dto.salesOrderReturn.InterfaceSalseOrderReturnDto">
+        /* IfSalesOrderReturn.insertInterfaceSalesOrderReturn */
+        INSERT INTO if_sales_order_return
+        (
+            purchase_order_by_customer
+           ,return_order_by_customer
+           ,sales_order
+           ,return_order
+           ,result_status
+           ,http_status
+           ,exceptions
+           ,created_datetime
+        )
+        VALUES (
+            #{purchaseOrderByCustomer}
+           ,#{returnOrderByCustomer}
+           ,#{salesOrder}
+           ,#{returnOrder}
+           ,#{resultStatus}
+           ,#{httpStatus}
+           ,#{exceptions}
+           ,#{createdDatetime}
+        )
+    </insert>
+</mapper>

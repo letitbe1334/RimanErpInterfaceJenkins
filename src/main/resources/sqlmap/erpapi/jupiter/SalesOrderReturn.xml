@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrderReturn.JupiterSalesOrderReturnMapper">
+  	<select id="getSalesOrderReturns" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnDto">
+    		/* SalesOrderReturn.getSalesOrderReturns */
+    		SELECT 'CBAR' AS CustomerReturnType
+              ,ro.return_order_id --  반품주문ID
+              ,ro.return_order_number AS returnOrderByCustomer --  반품주문번호
+              ,so.sales_order_id --  원주문ID
+              ,so.sales_order_number AS purchaseOrderByCustomer --  원주문번호
+              ,iso.sales_order AS ReferenceSDDocument
+              ,bl.belong_store_login_id AS SoldToParty --  판매처
+              ,ror.return_order_reason_type
+              ,cm.attr_val1 AS SDDocumentReason    --  반품사유
+              ,CASE 
+                    WHEN ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount > 0 THEN 'ZRDD' 
+                    ELSE NULL 
+                END AS ConditionType -- 배송차감액
+              ,ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount as ConditionRateValue -- 배송차감액
+              ,CASE 
+                    WHEN ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount > 0 THEN 'KRW' 
+                    ELSE NULL 
+                END AS ConditionCurrency -- 통화
+          FROM `jupiter-order`.return_order ro
+         INNER JOIN `jupiter-order`.return_order_request ror  ON ro.return_order_id = ror.return_order_id
+         INNER JOIN `jupiter-order`.return_order_sale ros ON ro.return_order_id = ros.return_order_id
+         INNER JOIN `jupiter-order`.sales_order so ON ro.sales_order_id = so.sales_order_id
+         INNER JOIN `jupiter-order`.sales_order_user sou ON so.sales_order_id = sou.sales_order_id
+         INNER JOIN `jupiter-member`.consumer cs ON sou.user_id = cs.user_id
+         INNER JOIN `jupiter-member`.belong bl ON cs.consumer_id  = bl.consumer_id
+         INNER JOIN `erp-system`.if_sales_order iso ON so.sales_order_number = iso.purchase_order_by_customer 
+          LEFT JOIN `erp-system`.code_master cm ON ror.return_order_reason_type = cm.code
+                                               AND cm.code_group_code = 'RETURN_REMARK'
+         WHERE ro.delete_yn = 'N'
+           AND ro.return_order_status = 'RETURN_COMPLETE'
+           AND DATE_FORMAT(ro.return_order_completion_datetime, '%y-%m-%d') between #{startDate} and #{endDate}
+  	</select>
+  	
+  	<select id="getSalesOrderReturnItems" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnItemDto">
+    		/* SalesOrderReturn.getSalesOrderReturnItems */
+        SELECT isoi.sales_order AS ReferenceSDDocument
+              ,isoi.sales_order_item AS ReferenceSDDocumentItem
+              ,rop.quantity as RequestedQuantity
+              ,cm.attr_val1 AS SDDocumentReason
+              ,'100' AS ReturnsRefundExtent
+              ,'P' AS ReturnsRefundProcgMode
+              ,'0001' AS CustRetItmFollowUpActivity
+          FROM `jupiter-order`.return_order_product rop
+         INNER JOIN `jupiter-order`.return_order ro ON rop.return_order_id = ro.return_order_id 
+         INNER JOIN `jupiter-order`.return_order_request ror  ON ro.return_order_id = ror.return_order_id
+         INNER JOIN `jupiter-order`.sales_order_product sopd ON ro.sales_order_id = sopd.sales_order_id
+         INNER JOIN `jupiter-product`.product pd ON sopd.product_id = pd.product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON sopd.sales_order_product_id = isoi.sales_order_product_id
+          LEFT JOIN `erp-system`.code_master cm ON ror.return_order_reason_type = cm.code
+                                               AND cm.code_group_code = 'RETURN_REMARK'
+         WHERE rop.delete_yn = 'N'
+           AND rop.return_order_id = #{return_order_id}
+  	</select>
+    
+    <select id="getSalesOrderReturnPayments" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnPaymentDto">
+        /* SalesOrderReturn.getSalesOrderReturnPayments */
+        SELECT row_number() over(order by r.refund_id) AS ZSequence
+              ,refund_payment_type as YY1_ZPaymentMethod
+              ,total_refund_amount as ZAmount
+              ,'KRW' as Zcurrency
+          FROM `jupiter-order`.refund r
+         WHERE return_order_id = #{return_order_id}
+    </select>
+</mapper>

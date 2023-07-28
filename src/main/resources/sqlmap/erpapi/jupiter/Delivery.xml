@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.delivery.JupiterDeliveryMapper">
+    <select id="getDeliveryDocumentItems" resultType="biz.riman.erp.batch.dto.delivery.DeliveryDocumentItemDto">
+    		/* Delivery.getDeliveryDocumentItems */
+        SELECT isoi.sales_order AS ReferenceSDDocument --  ERP 오더 번호
+              ,isoi.sales_order_item AS ReferenceSDDocumentItem -- 품목라인번호
+              ,sopd.quantity AS ActualDeliveryQuantity -- 배송수량
+              ,'EA' AS DeliveryQuantityUnit -- 단위
+              /** 부가 정보 */
+              ,so.sales_order_number AS purchaseOrderByCustomer --  주문번호
+              ,isoi.sales_order_product_id AS salesOrderProductId -- 상품번호
+              ,0 AS product_package_product_id
+          FROM `jupiter-order`.sales_order so
+         INNER JOIN `jupiter-order`.sales_order_product sopd ON so.sales_order_id = sopd.sales_order_id
+         INNER JOIN `jupiter-order`.outbound ob ON so.sales_order_id = ob.sales_order_id 
+                                               AND ob.delete_yn = 'N'
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON sopd.sales_order_product_id = isoi.sales_order_product_id
+         WHERE so.delete_yn = 'N'
+           /** IN_TRANSIT(배송중) */
+           AND ob.outbound_status = 'IN_TRANSIT'
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_delivery ifd
+                           WHERE so.sales_order_number = ifd.purchase_order_by_customer
+                             AND sopd.sales_order_product_id = ifd.sales_order_product_id)
+           AND DATE_FORMAT(ob.register_invoice_datetime, '%y-%m-%d') between #{startDate} and #{endDate}
+    </select>
+</mapper>

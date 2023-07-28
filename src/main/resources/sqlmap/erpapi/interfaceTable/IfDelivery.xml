@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.delivery.IfDeliveryMapper">
+    <insert id="insertInterfaceDeliveries" parameterType="biz.riman.erp.batch.dto.delivery.InterfaceDeliveryDto">
+        /* IfDelivery.insertInterfaceDeliveries */
+        INSERT INTO if_delivery
+        (
+            purchase_order_by_customer
+           ,sales_order
+           ,sales_order_product_id
+           ,sales_order_item
+           ,product_package_product_id
+           ,actual_delivery_quantity
+           ,result_status
+           ,http_status
+           ,exceptions
+           ,created_datetime
+        )
+        VALUES
+        <foreach item="item" collection="items" separator=",">
+        (
+            #{item.purchaseOrderByCustomer}
+           ,#{item.ReferenceSDDocument}
+           ,#{item.salesOrderProductId}
+           ,#{item.ReferenceSDDocumentItem}
+           ,#{item.productPackageProductId}
+           ,#{item.ActualDeliveryQuantity}
+           ,#{delivery.resultStatus}
+           ,#{delivery.httpStatus}
+           ,#{delivery.exceptions}
+           ,#{delivery.createdDatetime}
+        )
+        </foreach>
+    </insert>
+</mapper>

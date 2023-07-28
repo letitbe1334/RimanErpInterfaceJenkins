@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrder.JupiterSalesOrderMapper">
+  	<select id="getSalesOrders" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderDto">
+    		/* SalesOrder.getSalesOrders */
+        SELECT 'JUPITER' AS SenderBusinessSystemName -- JUPITER
+              /* 주문 기본 정보 */
+              ,so.sales_order_number AS PurchaseOrderByCustomer --  주문번호
+              ,'TA' AS SalesOrderType
+              ,'3100' AS SalesOrganization
+              ,CASE 
+                    WHEN sou.store_id = #{mismatchStoreJupiter} THEN 20 
+                    ELSE 10 
+                END AS DistributionChannel
+              ,CASE --  주문유형
+                    WHEN so.sales_order_type = 'GENERAL_ORDER' THEN 'ZOM'   --  일반주문
+                    ELSE 'ZSO'  --  정기구매
+                END AS ZSalesType
+              -- ,'INC11485' AS SoldToParty
+              ,bl.belong_store_login_id AS SoldToParty
+              ,DATE_FORMAT(IFNULL(ob.outbound_datetime, so.approval_datetime), '%Y-%m-%dT%H:%i:%s') AS RequestedDeliveryDate    --  미 출고지시건들은 배송요청일 없음
+              ,DATE_FORMAT(so.order_datetime, '%Y-%m-%dT%H:%i:%s') AS CustomerPurchaseOrderDate
+              ,DATE_FORMAT(so.approval_datetime, '%Y-%m-%dT%H:%i:%s') AS SalesOrderDate
+              ,'11' AS AdditionalCustomerGroup3
+              ,CASE
+                    WHEN sop.payment_type = 'CREDIT_CARD' THEN '11'
+                    WHEN sop.payment_type = 'SIMPLE_PAYMENT' THEN '19'
+                    WHEN sop.payment_type = 'AUTO_PAYMENT' THEN '17'
+                    WHEN sop.payment_type = 'POINT' THEN '13'
+                END AS AdditionalCustomerGroup3
+              ,bl.belong_branch_login_id as ZBINC
+              ,bl.belong_center_login_id as ZTINC
+              ,NULL AS ZRECOM
+              ,NULL AS ZGRECOM
+              /* 배송비, 쿠폰 */
+              ,'ZDC1'  AS DeliveryType -- 배송비 유형
+              ,ROUND(sop.delivery_fee_amount / 1.1) AS DeliveryRateValue -- 배송비
+              /* 쿠폰 정보 */
+              ,'ZCP1' AS CouponType   --  가격유형
+              ,ROUND(sop.total_coupon_discount_amount / 1.1) AS CouponRateValue   --  쿠폰할인금액
+              /** 부가 정보 */
+              ,so.sales_order_id
+          FROM `jupiter-order`.sales_order so
+         INNER JOIN `jupiter-order`.sales_order_user sou ON so.sales_order_id = sou.sales_order_id
+         INNER JOIN `jupiter-member`.consumer cs ON sou.user_id = cs.user_id
+         INNER JOIN `jupiter-member`.belong bl ON cs.consumer_id  = bl.consumer_id
+         INNER JOIN `jupiter-order`.sales_order_payment sop ON so.sales_order_id = sop.sales_order_id
+         INNER JOIN `jupiter-order`.sales_order_delivery sod ON so.sales_order_id = sod.sales_order_id
+          LEFT JOIN `jupiter-order`.outbound ob ON so.sales_order_id = ob.sales_order_id 
+                                               AND ob.delete_yn = 'N'
+         WHERE so.delete_yn = 'N'
+           /**
+             SALES_ORDER_COMPLETE(구매확정) : 주문생성
+             SALES_ORDER_CANCEL(결제취소) : 배치 스케줄 주문생성, 주문취소 JOB이 동시에 도는 경우로 인하여 주문취소 단계이지만 주문생성을 먼저 동작하기 위함
+             (출고지시) : 녹여져 있음으로 관여 X
+            */
+           AND CASE WHEN so.sales_order_status = 'SALES_ORDER_CANCEL' THEN 1
+                    WHEN so.sales_order_status = 'SALES_ORDER_COMPLETE' AND so.outbound_yn = 'N' THEN 1  --  변경 출고전 결제완료 주문
+                    ELSE 0
+                END = 1
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
+                           WHERE so.sales_order_number = iso.purchase_order_by_customer)
+           <!--AND so.order_datetime between #{startDatetime} and #{endDatetime}-->
+  	</select>
+	
+    <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
+        /* SalesOrder.getSalesOrderItems */
+        SELECT (row_number() over(order by sopd.sales_order_product_id)) * 10 as SalesOrderItem
+              ,0 AS sales_order_product_package_id
+              ,sopd.sales_order_product_id
+              ,pd.product_code AS Material
+              ,sopd.quantity AS RequestedQuantity
+              ,'EA' as RequestedQuantityUnit
+          FROM `jupiter-order`.sales_order_product sopd
+         INNER JOIN `jupiter-product`.product pd ON sopd.product_id = pd.product_id
+         WHERE sopd.delete_yn = 'N'
+           AND sopd.sales_order_id = #{salesOrderId}
+    </select>
+	
+    <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">
+        /* SalesOrder.getSalesOrderPayments */
+        SELECT row_number() over(order by payment_table.sales_order_payment_id) AS ZSequence
+              ,payment_table.ZPaymentMethod
+              ,payment_table.ZAmount
+              ,payment_table.ZCurrency
+          FROM (
+            SELECT /* 결제정보 */
+                   sop.sales_order_payment_id
+                  ,sop.payment_type as ZPaymentMethod
+                  ,sop.total_amount as ZAmount
+                  ,'KRW' as ZCurrency
+              FROM `jupiter-order`.sales_order_payment sop
+             WHERE sop.payment_type != 'POINT'
+               AND sop.sales_order_id = #{salesOrderId}
+             UNION ALL
+            SELECT /* 결제정보 */
+                   sop.sales_order_payment_id
+                  ,'POINT' as ZPaymentMethod
+                  ,sop.total_point as ZAmount
+                  ,'KRW' as ZCurrency
+              FROM `jupiter-order`.sales_order_payment sop
+             WHERE sop.total_point <![CDATA[>]]> 0
+               AND sop.sales_order_id = #{salesOrderId}
+          ) AS payment_table
+    </select>
+</mapper>

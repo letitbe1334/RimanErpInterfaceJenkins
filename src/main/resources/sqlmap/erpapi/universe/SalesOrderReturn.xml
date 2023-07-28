@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrderReturn.UniverseSalesOrderReturnMapper">
+  	<select id="getSalesOrderReturns" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnDto">
+    		/* SalesOrderReturn.getSalesOrderReturns */
+        --  반품완료 기준 조회
+        SELECT 'CBAR' AS CustomerReturnType
+              ,ro.return_order_id     --  반품주문ID
+              ,ro.return_order_no AS returnOrderByCustomer   --  반품주문번호
+              ,so.sales_order_id  --  원주문ID
+              ,so.sales_order_no AS purchaseOrderByCustomer  --  원주문번호
+              ,iso.sales_order AS ReferenceSDDocument
+              ,som.store_login_id AS SoldToParty --  판매처
+              ,ro.return_reason
+              ,cm.attr_val1 AS SDDocumentReason    --  반품사유
+              ,CASE 
+                    WHEN ro.refund_delivery_charge_yn = 'Y' THEN 'ZRDD' 
+                    ELSE null 
+                END AS ConditionType -- 배송차감액
+              ,CASE 
+                    WHEN ro.refund_delivery_charge_yn = 'Y' THEN 2500 
+                    ELSE 0 
+                END AS ConditionRateValue -- 반품배송비
+              ,CASE 
+                    WHEN ro.refund_delivery_charge_yn = 'Y' THEN 'KRW' 
+                    ELSE null 
+                END AS ConditionCurrency -- 통화
+          FROM `universe-order`.return_order ro
+         INNER JOIN `universe-order`.sales_order so ON ro.origin_order_id = so.sales_order_id
+         INNER JOIN `universe-order`.sales_order_member som ON som.sales_order_id = so.sales_order_id
+         INNER JOIN `erp-system`.if_sales_order iso ON so.sales_order_no = iso.purchase_order_by_customer 
+          LEFT JOIN `erp-system`.code_master cm ON ro.return_reason = cm.code
+                                               AND cm.code_group_code = 'RETURN_REMARK'
+         WHERE ro.delete_yn = 'N'
+           AND ro.return_order_status = 'RETURN_COMPLETED'
+           AND ro.return_date between #{startDate} and #{endDate}
+  	</select>
+  	
+  	<select id="getSalesOrderReturnItems" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnItemDto">
+    		/* SalesOrderReturn.getSalesOrderReturnItems */
+        SELECT isoi.sales_order AS ReferenceSDDocument
+              ,isoi.sales_order_item AS ReferenceSDDocumentItem
+              ,rop.qty AS RequestedQuantity
+              ,cm.attr_val1 AS ReturnReason
+              ,'100' AS ReturnsRefundExtent
+              ,'P' AS ReturnsRefundProcgMode
+              ,'0001' AS CustRetItmFollowUpActivity
+          FROM `universe-order`.return_order_product rop
+         INNER JOIN `universe-order`.return_order ro ON rop.return_order_id = ro.return_order_id 
+         INNER JOIN `universe-order`.sales_order_product sop ON ro.origin_order_id = sop.sales_order_id
+         INNER JOIN `universe-order`.product pd on sop.product_id = pd.product_id
+          LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON sop.sales_order_product_id = isoi.sales_order_product_id
+                                                         AND IFNULL(sopp.sales_order_product_package_id, 0) = isoi.sales_order_product_package_id 
+          LEFT JOIN `erp-system`.code_master cm ON ro.return_reason = cm.code
+                                               AND cm.code_group_code = 'RETURN_REMARK'
+         WHERE rop.delete_yn = 'N'
+           AND rop.return_order_id #{returnOrderId}
+  	</select>
+  	
+  	<select id="getSalesOrderReturnPayments" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnPaymentDto">
+    		/* SalesOrderReturn.getSalesOrderReturnPayments */
+        SELECT row_number() over(order by r.refund_id) AS ZSequence
+              ,r.payment_method as YY1_ZPaymentMethod
+              ,r.price as ZAmount
+              ,'KRW' as Zcurrency
+          FROM `universe-order`.refund r 
+         WHERE r.order_id #{returnOrderId}
+  	</select>
+</mapper>

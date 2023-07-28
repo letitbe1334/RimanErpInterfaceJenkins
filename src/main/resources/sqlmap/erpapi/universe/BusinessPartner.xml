@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.businessPartner.BusinessPartnerMapper">
+    <select id="getBusinessPartners" resultType="biz.riman.erp.batch.dto.businessPartner.BusinessPartnerDto">
+    		/* BusinessPartner.getBusinessPartners */
+        SELECT U.user_id AS "BusinessPartner"
+              ,S.store_nm AS "OrganizationBPName1"
+              ,'B102' AS "BusinessPartnerGrouping"
+              ,'2' AS "BusinessPartnerCategory"
+              ,'KO' AS "Language"
+              /** 주소 */
+              ,'KR' AS "Country"
+              ,TRIM(SUBSTRING_INDEX(S.address1, ' ', 1)) AS "CityName"
+              ,TRIM(SUBSTRING(S.address1, INSTR(S.address1, ' '), 60)) AS "StreetName"
+              ,S.address2 AS "HouseNumber"
+              ,S.ZIP_CD AS "PostalCode"
+              ,'KO' AS "AddressLanguage"
+              <!--,'' AS "ZTEMP11"
+              ,'' AS "ZTEMP12"
+              ,'' AS "ZTEMP13"
+              ,'' AS "ZTEMP14"
+              ,'' AS "ZTEMP15"-->
+              /** 고객사 판매영역 */
+              ,'3100' AS "SalesOrganization"
+              ,CASE 
+                    -- INC00001, INC11014 
+                    WHEN PS.STORE_SEQ_NO IN (#{mismatchStoreUniverse}, #{mismatchStoreJupiter}) THEN '20' 
+                    ELSE '10' 
+                END AS "DistributionChannel"
+              ,'00' AS "Division"
+              ,'01' AS "ShippingCondition"
+              ,'EXW' AS "IncotermsClassification"
+              ,'군포' AS "IncotermsLocation1"
+              ,'D001' AS "CustomerPaymentTerms"
+              ,'KRW' AS "Currency"
+              ,'01' AS "CustomerAccountAssignmentGroup"
+              /** 고객사 회사 */
+              ,'3100' AS "CustomCompanyCode"
+              ,'12100000' AS "CustomReconciliationAccount"
+              ,'D001' AS "CustomPaymentTerms"
+              /** 세금 */
+              ,'KR2' AS "BPTaxType"
+              ,S.business_no AS "BPTaxNumber"
+              /** 은행 */
+              ,'01' AS "BankIdentification"
+              ,'KR' AS "BankCountryKey"
+              ,S.bank_cd AS "BankNumber"
+              ,REPLACE(`universe-member`.FN_DECRYPT(S.bank_acct_no, <![CDATA['6v9y$B&E)H@McQeThWmZq4t7w!z%C*F-']]>), '-', '') AS "BankAccount"
+              ,S.bank_holder_nm AS "BankAccountHolderName"
+              /** 공급처 구매 */
+              ,'1000' AS "PurchasingOrganization"
+              ,'KRW' AS "PurchaseOrderCurrency"
+              ,'KT01' AS "PurchasePaymentTerms"
+              ,true AS "InvoiceIsGoodsReceiptBased"
+              /** 공급처 회사 */
+              ,'3100' AS "SupplierCompanyCode"
+              ,'21100000' AS "SupplierReconciliationAccount"
+              ,'KT01' AS "SupplierPaymentTerms"
+          FROM `universe-member`.TB_USER U 
+         INNER JOIN `universe-member`.TB_STORE S ON U.user_seq_no = S.user_seq_no
+          LEFT JOIN `universe-member`.TB_STORE PS ON S.store_seq_no_parent = PS.STORE_SEQ_NO
+         WHERE U.user_id IN ('INC11197')
+         -- 수정일이 있더라도 데이터가 erp에 없음으로 생성으로 넘길 수 있도록 처리
+         <!--<where>2
+            <choose>
+                <when test='"C".equals(saveFlag)'>
+                  
+                  AND DATE_FORMAT(S.CREATED_DT, '%y-%m-%d') BETWEEN #{startDate} AND #{endDate}
+                </when>
+                <otherwise>
+                  AND S.MODIFIED_DT BETWEEN #{startDatetime} AND #{endDatetime}
+                </otherwise>
+            </choose>
+         </where>-->
+    </select>
+    
+    <select id="getBusinessPartnerRolses" resultType="biz.riman.erp.batch.dto.businessPartner.BusinessPartnerRoleDto">
+        /* BusinessPartner.getBusinessPartnerRolses */
+        SELECT 'FLCU00' AS BusinessPartnerRole
+         UNION ALL
+        SELECT 'FLCU01' AS BusinessPartnerRole
+         UNION ALL
+        SELECT 'FLVN01' AS BusinessPartnerRole
+         UNION ALL
+        SELECT 'FLVN00' AS BusinessPartnerRole
+    </select>
+</mapper>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz.riman.erp.batch.mapper.salesOrderCancel.JupiterSalesOrderCancelMapper">
+    <select id="getSalesOrderCancels" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelDto">
+    		/* SalesOrderCancel.getSalesOrderCancels */
+        SELECT so.sales_order_number AS PurchaseOrderByCustomer
+              ,IFNULL(iso.sales_order, '') AS SalesOrder
+              ,so.sales_order_id
+              /* 쿠폰 정보 */
+              ,'ZCP1' AS ConditionType   --  가격유형
+              ,ROUND(sop.total_coupon_discount_amount / 1.1) AS ConditionRateValue   --  쿠폰할인금액
+              ,'KRW' AS ConditionCurrency
+          FROM `jupiter-order`.sales_order so
+         INNER JOIN `jupiter-order`.sales_order_payment sop ON so.sales_order_id = sop.sales_order_id    
+         INNER JOIN `erp-system`.if_sales_order iso ON so.sales_order_number = iso.purchase_order_by_customer                        
+         WHERE so.delete_yn = 'N'
+           AND so.sales_order_status = 'SALES_ORDER_CANCEL'
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_cancel isoc
+                           WHERE so.sales_order_number = isoc.purchase_order_by_customer)
+           <!--AND DATE_FORMAT(so.cancel_datetime, '%y-%m-%d') between #{startDate} and #{endDate}--> --   전일 ~ 당일
+           <!--AND so.sales_order_number = 'P20230710005011'-->
+    </select>
+	
+    <select id="getSalesOrderCancelItems" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelItemDto">
+        /* SalesOrder.getSalesOrderItems */
+        SELECT isoi.sales_order_item AS SalesOrderItem
+              ,CASE so.cancel_reason_type 
+                    WHEN 'SIMPLE_CHANGE_MIND' THEN '10' -- 단순변심
+                    WHEN 'ORDER_MISTAKE' THEN '20' -- 주문실수
+                    WHEN 'REPAYMENT' THEN '30' -- 상품 추가하여 재결제
+                    WHEN 'SUBSCRIBE_CANCEL' THEN '40' -- 구독철회
+                    WHEN 'ADMIN_CANCEL' THEN '50' -- 관리자취소
+                    ELSE '70'
+                END AS SalesDocumentRjcnReason
+          FROM `jupiter-order`.sales_order so
+         INNER JOIN `jupiter-order`.sales_order_product sopd ON so.sales_order_id = sopd.sales_order_id
+         INNER JOIN `jupiter-product`.product pd ON sopd.product_id = pd.product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON sopd.sales_order_product_id = isoi.sales_order_product_id
+         WHERE sopd.delete_yn = 'N'
+           AND sopd.sales_order_id = #{salesOrderId}
+    </select>
+  
+    <select id="getSalesOrderCancelPayments" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelPaymentDto">
+        /* SalesOrderCancel.getSalesOrderCancelPayments */
+        SELECT row_number() over(order by payment_table.sales_order_payment_id) AS ZSequence
+              ,payment_table.ZPaymentMethod
+              ,payment_table.ZAmount
+              ,payment_table.ZCurrency
+          FROM (
+            SELECT /* 결제정보 */
+                   sop.sales_order_payment_id
+                  ,sop.payment_type as ZPaymentMethod
+                  ,sop.total_amount as ZAmount
+                  ,'KRW' as ZCurrency
+              FROM `jupiter-order`.sales_order_payment sop
+             WHERE sop.payment_type != 'POINT'
+               AND sop.sales_order_id = #{salesOrderId}
+             UNION ALL
+            SELECT /* 결제정보 */
+                   sop.sales_order_payment_id
+                  ,'POINT' as ZPaymentMethod
+                  ,sop.total_point as ZAmount
+                  ,'KRW' as ZCurrency
+              FROM `jupiter-order`.sales_order_payment sop
+             WHERE sop.total_point <![CDATA[>]]> 0
+               AND sop.sales_order_id = #{salesOrderId}
+          ) AS payment_table
+    </select>
+</mapper>
