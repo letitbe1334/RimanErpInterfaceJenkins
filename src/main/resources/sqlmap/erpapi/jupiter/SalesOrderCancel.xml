@@ -18,7 +18,6 @@
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_cancel isoc
                            WHERE so.sales_order_number = isoc.purchase_order_by_customer)
            <!--AND DATE_FORMAT(so.cancel_datetime, '%y-%m-%d') between #{startDate} and #{endDate}--> --   전일 ~ 당일
-           <!--AND so.sales_order_number = 'P20230710005011'-->
     </select>
 	
     <select id="getSalesOrderCancelItems" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelItemDto">

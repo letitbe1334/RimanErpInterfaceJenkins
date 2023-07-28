@@ -21,7 +21,6 @@
               ,DATE_FORMAT(IFNULL(ob.outbound_datetime, so.approval_datetime), '%Y-%m-%dT%H:%i:%s') AS RequestedDeliveryDate    --  미 출고지시건들은 배송요청일 없음
               ,DATE_FORMAT(so.order_datetime, '%Y-%m-%dT%H:%i:%s') AS CustomerPurchaseOrderDate
               ,DATE_FORMAT(so.approval_datetime, '%Y-%m-%dT%H:%i:%s') AS SalesOrderDate
-              ,'11' AS AdditionalCustomerGroup3
               ,CASE
                     WHEN sop.payment_type = 'CREDIT_CARD' THEN '11'
                     WHEN sop.payment_type = 'SIMPLE_PAYMENT' THEN '19'
@@ -66,8 +65,7 @@
     <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
         /* SalesOrder.getSalesOrderItems */
         SELECT (row_number() over(order by sopd.sales_order_product_id)) * 10 as SalesOrderItem
-              ,0 AS sales_order_product_package_id
-              ,sopd.sales_order_product_id
+              ,pd.product_id 
               ,pd.product_code AS Material
               ,sopd.quantity AS RequestedQuantity
               ,'EA' as RequestedQuantityUnit
@@ -75,6 +73,8 @@
          INNER JOIN `jupiter-product`.product pd ON sopd.product_id = pd.product_id
          WHERE sopd.delete_yn = 'N'
            AND sopd.sales_order_id = #{salesOrderId}
+         GROUP BY sopd.sales_order_id 
+                 ,pd.product_id
     </select>
 	
     <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">

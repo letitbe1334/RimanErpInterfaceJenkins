@@ -6,10 +6,9 @@
         INSERT INTO if_delivery
         (
             purchase_order_by_customer
+           ,product_id
            ,sales_order
-           ,sales_order_product_id
            ,sales_order_item
-           ,product_package_product_id
            ,actual_delivery_quantity
            ,result_status
            ,http_status
@@ -20,10 +19,9 @@
         <foreach item="item" collection="items" separator=",">
         (
             #{item.purchaseOrderByCustomer}
+           ,#{item.productId}
            ,#{item.ReferenceSDDocument}
-           ,#{item.salesOrderProductId}
            ,#{item.ReferenceSDDocumentItem}
-           ,#{item.productPackageProductId}
            ,#{item.ActualDeliveryQuantity}
            ,#{delivery.resultStatus}
            ,#{delivery.httpStatus}

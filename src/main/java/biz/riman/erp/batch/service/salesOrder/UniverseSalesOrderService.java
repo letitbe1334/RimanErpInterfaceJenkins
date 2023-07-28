@@ -108,7 +108,10 @@ public class UniverseSalesOrderService {
                                     clientResponse.getBody().getMessage()));
                             ifMapper.insertInterfaceSalesOrderItem(bodyParam.getTo_Item(),
                                     bodyParam.getPurchaseOrderByCustomer(),
-                                    clientResponse.getBody().getReferenceNo());
+                                    clientResponse.getBody().getReferenceNo(),
+                                    clientResponse.getBody().getResultStatus(),
+                                    clientResponse.getStatusCodeValue(),
+                                    clientResponse.getBody().getMessage());
                         } catch (Exception e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();

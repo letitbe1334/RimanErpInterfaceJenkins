@@ -26,10 +26,8 @@ public class SalesOrderItemDto extends BaseDto {
 	private String RequestedQuantityUnit;
     
     /**
-     * 상품 키값, 상품 패키지 키값(universe, jupiter)
+     * 제품 키값(universe, jupiter)
      */
     @JsonIgnore
-    private String salesOrderProductId;
-    @JsonIgnore
-    private String salesOrderProductPackageId;
+    private String productId;
 }

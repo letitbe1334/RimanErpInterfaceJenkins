@@ -16,16 +16,17 @@
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_cancel isoc
                            WHERE so.sales_order_no = isoc.purchase_order_by_customer)
            <!--AND so.cancel_date between #{startDate} and #{endDate}--> --   전일 ~ 당일
-           <!--AND so.sales_order_no = '20230713007907'-->
     </select>
 	
     <select id="getSalesOrderCancelItems" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelItemDto">
         /* SalesOrderCancel.getSalesOrderCancelItems */
         SELECT isoi.sales_order_item AS SalesOrderItem
               ,'70' AS SalesDocumentRjcnReason
-          FROM `universe-order`.sales_order_product sop
+          FROM `universe-order`.sales_order so
+         INNER JOIN `universe-order`.sales_order_product sop ON so.sales_order_id = sop.sales_order_id 
          INNER JOIN `universe-order`.product pd on sop.product_id = pd.product_id
-         INNER JOIN `erp-system`.if_sales_order_item isoi ON sop.sales_order_product_id = isoi.sales_order_product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON so.sales_order_no = isoi.purchase_order_by_customer 
+                                                         AND sop.product_id = isoi.product_id
          WHERE sop.delete_yn = 'N'
            AND sop.sales_order_id = #{salesOrderId}
     </select>

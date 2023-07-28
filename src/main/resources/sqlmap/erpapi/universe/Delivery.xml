@@ -9,23 +9,22 @@
               ,'EA' AS DeliveryQuantityUnit -- 단위
               /** 부가 정보 */
               ,so.sales_order_no AS purchaseOrderByCustomer
-              ,isoi.sales_order_product_id AS salesOrderProductId -- 상품번호
-              ,coalesce(sopp.product_package_product_id, lip.product_id) AS product_package_product_id
+              ,coalesce(sopp.product_package_product_id, lip.product_id) AS productId
           FROM `universe-order`.order_aggregation oa
          INNER JOIN `universe-order`.sales_order so ON oa.order_no = so.sales_order_no
          INNER JOIN `universe-order`.sales_order_product sop ON so.sales_order_id = sop.sales_order_id
          INNER JOIN `universe-order`.logistic_inout li ON so.delivery_no = li.delivery_no
          INNER JOIN `universe-order`.logistic_inout_product lip ON li.logistic_inout_id = lip.logistic_inout_id 
                                                                AND sop.product_id = lip.product_id
-         INNER JOIN `erp-system`.if_sales_order_item isoi ON sop.sales_order_product_id = isoi.sales_order_product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON so.sales_order_no = isoi.purchase_order_by_customer 
+                                                         AND sop.product_id = isoi.product_id
           LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
          WHERE so.delete_yn = 'N'
            AND oa.order_work_type = 'SALE'
            AND oa.order_status = 'DELIVERY_COMPLETED'
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_delivery ifd
                            WHERE so.sales_order_no = ifd.purchase_order_by_customer
-                             AND sop.sales_order_product_id = ifd.sales_order_product_id
-                             AND IFNULL(sopp.product_package_product_id, lip.product_id) = ifd.sales_order_product_package_id)
+                             AND sop.product_id = ifd.product_id)
            AND li.due_date between #{startDate} and #{endDate}
     </select>
 </mapper>

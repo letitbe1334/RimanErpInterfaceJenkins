@@ -31,7 +31,5 @@ public class DeliveryDocumentItemDto {
     @JsonIgnore
     private String purchaseOrderByCustomer;
     @JsonIgnore
-    private String salesOrderProductId;
-    @JsonIgnore
-    private String productPackageProductId;
+    private String productId;
 }

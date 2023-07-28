@@ -29,20 +29,26 @@
         INSERT INTO if_sales_order_item
         (
             purchase_order_by_customer
+           ,product_id
+           ,requested_quantity
            ,sales_order
-           ,sales_order_product_id
-           ,sales_order_product_package_id
            ,sales_order_item
+           ,result_status
+           ,http_status
+           ,exceptions
            ,created_datetime
         )
         VALUES
         <foreach item="item" collection="items" separator=",">
         (
             #{purchaseOrderByCustomer}
+           ,#{item.productId}
+           ,#{item.RequestedQuantity}
            ,#{salesOrder}
-           ,#{item.salesOrderProductId}
-           ,#{item.salesOrderProductPackageId}
            ,#{item.salesOrderItem}
+           ,#{resultStatus}
+           ,#{httpStatus}
+           ,#{exceptions}
            ,#{item.createdDatetime}
         )
         </foreach>

@@ -10,7 +10,6 @@
         SELECT 'UNIVERSE' AS SenderBusinessSystemName
               /** 주문 기본 정보 */
               ,so.sales_order_no AS PurchaseOrderByCustomer --  주문번호
-              <!--,'20230724000026' AS PurchaseOrderByCustomer--> --  주문번호
               ,'TA' AS SalesOrderType
               ,'3100' AS SalesOrganization
               ,CASE WHEN som.store_login_id = #{mismatchStoreUniverse} THEN '20'
@@ -22,7 +21,6 @@
                    WHEN so.sales_order_type = 'RECEIVING_BASIC_INVENTORY' THEN 'ZPO' --  기초재고-수령
                    WHEN so.sales_order_type = 'NOT_RECEIVED_BASIC_INVENTORY' THEN 'ZZ' --  기초재고-미수령
                 END AS ZSalesType
-              -- ,'INC11485' AS SoldToParty
               ,som.store_login_id AS SoldToParty
               ,DATE_FORMAT(IFNULL(loi.delivery_order_datetime, so.approval_date), '%Y-%m-%dT%H:%i:%s') AS RequestedDeliveryDate    --  미 출고지시건들은 배송요청일 없음
               ,DATE_FORMAT(so.order_date, '%Y-%m-%dT%H:%i:%s') AS CustomerPurchaseOrderDate
@@ -64,24 +62,22 @@
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
                            WHERE so.sales_order_no = iso.purchase_order_by_customer)
            <!--AND so.created_datetime between #{startDatetime} and #{endDatetime}-->
-           <!--AND so.sales_order_no in ('20230711007606', '20230711007702')-->
     </select>
 	
     <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
         /* SalesOrder.getSalesOrderItems */
         SELECT (row_number() over(order by sop.sales_order_product_id)) * 10 as SalesOrderItem
-              ,IFNULL(sopp.sales_order_product_package_id, 0) AS sales_order_product_package_id
-              ,sop.sales_order_product_id
+              ,coalesce(pd2.product_id, pd.product_id) AS product_id
               ,coalesce(pd2.product_code, pd.product_code) AS Material
-              <!--,'20110001' AS Material-->
-              <!--,'20110101' AS Material-->
-              ,coalesce(sop.order_qty * sopp.package_qty, sop.order_qty) AS RequestedQuantity
+              ,sum(coalesce(sop.order_qty * sopp.package_qty, sop.order_qty)) AS RequestedQuantity
               ,'EA' AS RequestedQuantityUnit
           FROM `universe-order`.sales_order_product sop
          INNER JOIN `universe-order`.product pd ON sop.product_id = pd.product_id
           LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
           LEFT JOIN `universe-order`.product pd2 ON sopp.product_package_product_id = pd2.product_id
          WHERE sop.sales_order_id = #{salesOrderId}
+         GROUP BY sop.sales_order_id 
+                 ,coalesce(pd2.product_id, pd.product_id)
     </select>
 	
     <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">
