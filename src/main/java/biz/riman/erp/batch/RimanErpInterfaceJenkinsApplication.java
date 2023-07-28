@@ -6,17 +6,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @EnableBatchProcessing
-public class RimanErpInterfaceJenkinsApplications {
-//    private static final Logger logger = LoggerFactory.getLogger(RimanErpInterfaceJenkinsApplications.class);
+public class RimanErpInterfaceJenkinsApplication {
+//    private static final Logger logger = LoggerFactory.getLogger(RimanErpInterfaceJenkinsApplication.class);
 
     public static void main(String[] args) {
 //	public static void main(String[] args) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
-//	    SpringApplication.run(RimanErpInterfaceJenkinsApplications.class, args);
-		final var context = SpringApplication.run(RimanErpInterfaceJenkinsApplications.class, args);
+//	    SpringApplication.run(RimanErpInterfaceJenkinsApplication.class, args);
+		final var context = SpringApplication.run(RimanErpInterfaceJenkinsApplication.class, args);
 		System.exit(SpringApplication.exit(context));
         
 
-//        SpringApplication app = new SpringApplication(RimanErpInterfaceJenkinsApplications.class);
+//        SpringApplication app = new SpringApplication(RimanErpInterfaceJenkinsApplication.class);
 //        app.setWebApplicationType(WebApplicationType.NONE);
 //        ConfigurableApplicationContext ctx = app.run(args);
 //        JobLauncher jobLauncher = ctx.getBean(JobLauncher.class);
