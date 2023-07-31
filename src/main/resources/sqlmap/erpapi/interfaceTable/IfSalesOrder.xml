@@ -33,6 +33,7 @@
            ,requested_quantity
            ,sales_order
            ,sales_order_item
+           ,delivery_flag
            ,result_status
            ,http_status
            ,exceptions
@@ -46,6 +47,7 @@
            ,#{item.RequestedQuantity}
            ,#{salesOrder}
            ,#{item.salesOrderItem}
+           ,#{item.deliveryFlag}
            ,#{resultStatus}
            ,#{httpStatus}
            ,#{exceptions}

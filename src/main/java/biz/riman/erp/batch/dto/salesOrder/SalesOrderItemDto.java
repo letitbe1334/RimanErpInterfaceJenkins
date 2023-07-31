@@ -30,4 +30,24 @@ public class SalesOrderItemDto extends BaseDto {
      */
     @JsonIgnore
     private String productId;
+    
+    /**
+     * 배송비 여부
+     */
+    @JsonIgnore
+    private String deliveryFlag;
+
+	public SalesOrderItemDto(@NotBlank(message = "SalesOrderItem must not be empty") String salesOrderItem,
+			@NotBlank(message = "Material must not be empty") String material,
+			@NotBlank(message = "RequestedQuantity must not be empty") String requestedQuantity,
+			@NotBlank(message = "RequestedQuantityUnit must not be empty") String requestedQuantityUnit,
+			String deliveryFlag) {
+		super();
+		SalesOrderItem = salesOrderItem;
+		Material = material;
+		RequestedQuantity = requestedQuantity;
+		RequestedQuantityUnit = requestedQuantityUnit;
+		this.deliveryFlag = deliveryFlag;
+	}
+    
 }

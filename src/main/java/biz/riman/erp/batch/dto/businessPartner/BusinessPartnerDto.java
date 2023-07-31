@@ -53,12 +53,12 @@ public class BusinessPartnerDto {
     /**
      * BP 고객사 판매지역
      */
-    @JsonProperty(value = "TaxSalesOrganization")
-    private String TaxSalesOrganization; // 동일한 값 존재로 property 값 변경
-    @JsonProperty(value = "TaxDistributionChannel")
-    private String TaxDistributionChannel; // 동일한 값 존재로 property 값 변경
-    @JsonProperty(value = "TaxDivision")
-    private String TaxDivision; // 동일한 값 존재로 property 값 변경
+    @JsonProperty(value = "SalesOrganization")
+    private String SalesOrganization;
+    @JsonProperty(value = "DistributionChannel")
+    private String DistributionChannel;
+    @JsonProperty(value = "Division")
+    private String Division;
     @JsonProperty(value = "ShippingCondition")
     private String ShippingCondition;
     @JsonProperty(value = "IncotermsClassification")
@@ -75,18 +75,12 @@ public class BusinessPartnerDto {
     /**
      * BP 고객사 판매지역 > 세금
      */
-    @JsonProperty(value = "SalesOrganization")
-    private String SalesOrganization;
-    @JsonProperty(value = "DistributionChannel")
-    private String DistributionChannel;
-    @JsonProperty(value = "Division")
-    private String Division;
     @JsonProperty(value = "DepartureCountry")
-    private String DepartureCountry;
+    private String DepartureCountry = "KR";
     @JsonProperty(value = "CustomerTaxCategory")
-    private String CustomerTaxCategory;
+    private String CustomerTaxCategory = "TTX1";
     @JsonProperty(value = "CustomerTaxClassification")
-    private String CustomerTaxClassification;
+    private String CustomerTaxClassification = "1";
     
     
     /**

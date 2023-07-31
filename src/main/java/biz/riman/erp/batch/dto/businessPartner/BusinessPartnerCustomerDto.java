@@ -22,8 +22,13 @@ public class BusinessPartnerCustomerDto {
     public BusinessPartnerCustomerDto(BusinessPartnerDto bp) {
         super();
         this.to_CustomerSalesArea = new ArrayList<BusinessPartnerCustomerSalesAreaDto>();
+        // 세금
+        BusinessPartnerCustomerSalesAreaTaxDto tax = new BusinessPartnerCustomerSalesAreaTaxDto();
+        BeanUtils.copyProperties(bp, tax);
+        // 판매지역
         BusinessPartnerCustomerSalesAreaDto customerSalesArea = new BusinessPartnerCustomerSalesAreaDto();
         BeanUtils.copyProperties(bp, customerSalesArea);
+        customerSalesArea.setTo_SalesAreaTax(List.of(tax));
         this.to_CustomerSalesArea.add(customerSalesArea);
         
         this.to_CustomerCompany = new ArrayList<BusinessPartnerCustomerCompanyDto>();

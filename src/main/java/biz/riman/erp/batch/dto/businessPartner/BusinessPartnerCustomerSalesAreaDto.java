@@ -1,5 +1,7 @@
 package biz.riman.erp.batch.dto.businessPartner;
 
+import java.util.List;
+
 import javax.validation.constraints.NotBlank;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,4 +40,6 @@ public class BusinessPartnerCustomerSalesAreaDto {
     @NotBlank(message = "CustomerAccountAssignmentGroup must not be empty")
     @JsonProperty(value = "CustomerAccountAssignmentGroup")
     private String CustomerAccountAssignmentGroup;
+    @JsonProperty(value = "to_SalesAreaTax")
+    private List<BusinessPartnerCustomerSalesAreaTaxDto> to_SalesAreaTax;
 }

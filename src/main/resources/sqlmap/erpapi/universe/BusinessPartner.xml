@@ -8,6 +8,10 @@
               ,'B102' AS "BusinessPartnerGrouping"
               ,'2' AS "BusinessPartnerCategory"
               ,'KO' AS "Language"
+              ,CASE 
+                    WHEN STATUS = 'ACTIVATED' THEN false
+                    ELSE true
+                END AS "IsMarkedForArchiving"
               /** 주소 */
               ,'KR' AS "Country"
               ,TRIM(SUBSTRING_INDEX(S.address1, ' ', 1)) AS "CityName"

@@ -64,18 +64,18 @@ public class SalesOrderDto {
     /**
      * 배송비 / 쿠폰
      */
-//    @JsonProperty(value = "DeliveryType")
     @JsonIgnore
     private String DeliveryType;
-//    @JsonProperty(value = "DeliveryRateValue")
     @JsonIgnore
     private String DeliveryRateValue;
-//    @JsonProperty(value = "CouponType")
     @JsonIgnore
     private String CouponType;
-//    @JsonProperty(value = "CouponRateValue")
     @JsonIgnore
     private String CouponRateValue;
+    @JsonIgnore
+    private String CouponVatType;
+    @JsonIgnore
+    private String CouponRateVatValue;
     
     /**
      * 하위 테이블 조회용

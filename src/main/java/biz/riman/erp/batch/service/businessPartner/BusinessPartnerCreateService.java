@@ -108,7 +108,6 @@ public class BusinessPartnerCreateService {
                         headers.add("User-Agent", "Other");
                     })
                     .body(BodyInserters.fromValue(bodyParam))
-//                    .exchangeToMono(clientResponse -> clientResponse.toEntity(String.class))
                     .exchangeToMono(clientResponse -> clientResponse.toEntity(ResponseDto.class))
                     .doOnSuccess(clientResponse -> {
                         log.info("## clientResponse.getStatusCode() : {}", clientResponse.getStatusCode());

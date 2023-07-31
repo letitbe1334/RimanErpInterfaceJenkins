@@ -19,9 +19,11 @@ import biz.riman.erp.batch.dto.ResponseDto;
 import biz.riman.erp.batch.dto.salesOrder.InterfaceSalseOrderDto;
 import biz.riman.erp.batch.dto.salesOrder.PricingDto;
 import biz.riman.erp.batch.dto.salesOrder.SalesOrderDto;
+import biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto;
 import biz.riman.erp.batch.mapper.salesOrder.IfSalesOrderMapper;
 import biz.riman.erp.batch.mapper.salesOrder.JupiterSalesOrderMapper;
 import biz.riman.erp.batch.parameter.SalesOrderParameter;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -57,11 +59,25 @@ public class JupiterSalesOrderService {
                 parameter.setPaymentId(bodyParam.getPaymentId());
                 
                 // 주문 항목 정보 setting
-                bodyParam.setTo_Item(mapper.getSalesOrderItems(parameter));
-                // 주문 배송비/쿠폰 정보 setting :: universe의 경우 쿠폰 없음
+                List<SalesOrderItemDto> items = mapper.getSalesOrderItems(parameter);
+                /**
+                 * 주문상품 목록 하단에 배송비 정보 삽입
+                 * 배송비가 없는 경우 보내지 않음.
+                 * */
+                if (!StringUtil.isNullOrEmpty(bodyParam.getDeliveryType())) {
+                	items.add(new SalesOrderItemDto(
+                			String.valueOf((items.size() + 1) * 10), 
+                			"990001",
+                			"1",
+                			"EA",
+                			"Y"));
+                }
+                bodyParam.setTo_Item(items);
+                // 주문 쿠폰 정보 setting
                 List<PricingDto> pricing = new ArrayList<PricingDto>();
-                pricing.add(new PricingDto(bodyParam.getDeliveryType(), bodyParam.getDeliveryRateValue(), "KRW"));
+//                pricing.add(new PricingDto(bodyParam.getDeliveryType(), bodyParam.getDeliveryRateValue(), "KRW"));
                 pricing.add(new PricingDto(bodyParam.getCouponType(), bodyParam.getCouponRateValue(), "KRW"));
+                pricing.add(new PricingDto(bodyParam.getCouponVatType(), bodyParam.getCouponRateVatValue(), "KRW"));
                 bodyParam.setTo_Pricing(pricing);
                 // 주문 결제 정보 setting
                 bodyParam.setTo_ZPayment(mapper.getSalesOrderPayments(parameter));
@@ -84,7 +100,7 @@ public class JupiterSalesOrderService {
                 localApiClient
                     .post()
                     .uri("/http/sd/zct_so_create")
-                    .accept(MediaType.APPLICATION_JSON) // , MediaType.APPLICATION_XML
+                    .accept(MediaType.APPLICATION_JSON)
                     .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId("riman"))
                     .headers(headers -> {
                         headers.add("User-Agent", "Other");
