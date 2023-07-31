@@ -62,7 +62,7 @@
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
                            WHERE so.sales_order_no = iso.purchase_order_by_customer)
            <!--AND so.created_datetime between #{startDatetime} and #{endDatetime}-->
-           AND so.sales_order_no = '20220623000001'
+           AND so.sales_order_no = '20221229006121'
     </select>
 	
     <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
