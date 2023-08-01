@@ -17,16 +17,19 @@ public class InterfaceSalseOrderCancelDto extends BaseDto {
     private int httpStatus;
     // 에러
     private String exceptions;
+    // MPL id (SAP)
+    private String sapMessageProcessingLogId;
     
 
     public InterfaceSalseOrderCancelDto(String purchaseOrderByCustomer, String salesOrder, String resultStatus,
-            int httpStatus, String exceptions) {
+            int httpStatus, String exceptions, String sapMessageProcessingLogId) {
         super();
         this.purchaseOrderByCustomer = purchaseOrderByCustomer;
         this.salesOrder = salesOrder;
         this.resultStatus = resultStatus;
         this.httpStatus = httpStatus;
         this.exceptions = exceptions;
+        this.sapMessageProcessingLogId = sapMessageProcessingLogId;
     }
     
 }

@@ -23,12 +23,16 @@ public class InterfaceDeliveryDto extends BaseDto {
     private int httpStatus;
     // 에러
     private String exceptions;
+    // MPL id (SAP)
+    private String sapMessageProcessingLogId;
     
-    public InterfaceDeliveryDto(String resultStatus, int httpStatus, String exceptions) {
+    public InterfaceDeliveryDto(String resultStatus, int httpStatus, String exceptions,
+    		String sapMessageProcessingLogId) {
         super();
         this.resultStatus = resultStatus;
         this.httpStatus = httpStatus;
         this.exceptions = exceptions;
+        this.sapMessageProcessingLogId = sapMessageProcessingLogId;
     }
     
 }

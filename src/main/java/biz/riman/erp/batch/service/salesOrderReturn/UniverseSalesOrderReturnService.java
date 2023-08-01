@@ -96,14 +96,15 @@ public class UniverseSalesOrderReturnService {
                             log.info("## clientResponse.getStatusCode() : {}", clientResponse.getStatusCode());
                             log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
                             try {
-                                ifMapper.insertInterfaceSalesOrderReturn(new InterfaceSalseOrderReturnDto(
+                                ifMapper.saveInterfaceSalesOrderReturn(new InterfaceSalseOrderReturnDto(
                                         bodyParam.getPurchaseOrderByCustomer(),
                                         bodyParam.getReturnOrderByCustomer(),
                                         bodyParam.getReferenceSDDocument(),
                                         clientResponse.getBody().getReferenceNo(),
                                         clientResponse.getBody().getResultStatus(),
                                         clientResponse.getStatusCodeValue(),
-                                        clientResponse.getBody().getMessage()));
+                                        clientResponse.getBody().getMessage(),
+                                        clientResponse.getBody().getSapMessageProcessingLogId()));
                             } catch (Exception e) {
                                 // TODO Auto-generated catch block
                                 e.printStackTrace();

@@ -74,10 +74,11 @@ public class JupiterDeliveryService {
                     log.info("## clientResponse.getStatusCode() : {}", clientResponse.getStatusCode());
                     log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
                     try {
-                        ifMapper.insertInterfaceDeliveries(delivery.getTo_Item(), new InterfaceDeliveryDto(
+                        ifMapper.saveInterfaceDeliveries(delivery.getTo_Item(), new InterfaceDeliveryDto(
                                 clientResponse.getBody().getResultStatus(),
                                 clientResponse.getStatusCodeValue(),
-                                clientResponse.getBody().getMessage()));
+                                clientResponse.getBody().getMessage(),
+                                clientResponse.getBody().getSapMessageProcessingLogId()));
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();

@@ -113,14 +113,15 @@ public class JupiterSalesOrderService {
                         try {
 
                             log.info("## I/F 테이블 INSERT ##");
-                            ifMapper.insertInterfaceSalesOrder(new InterfaceSalseOrderDto(
+                            ifMapper.saveInterfaceSalesOrder(new InterfaceSalseOrderDto(
                                     bodyParam.getPurchaseOrderByCustomer(),
                                     clientResponse.getBody().getReferenceNo(),
                                     clientResponse.getBody().getResultStatus(),
                                     clientResponse.getBody().getResultStatusDetail(),
                                     clientResponse.getStatusCodeValue(),
-                                    clientResponse.getBody().getMessage()));
-                            ifMapper.insertInterfaceSalesOrderItem(bodyParam.getTo_Item(),
+                                    clientResponse.getBody().getMessage(),
+                                    clientResponse.getBody().getSapMessageProcessingLogId()));
+                            ifMapper.saveInterfaceSalesOrderItem(bodyParam.getTo_Item(),
                                     bodyParam.getPurchaseOrderByCustomer(),
                                     clientResponse.getBody().getReferenceNo(),
                                     clientResponse.getBody().getResultStatus(),

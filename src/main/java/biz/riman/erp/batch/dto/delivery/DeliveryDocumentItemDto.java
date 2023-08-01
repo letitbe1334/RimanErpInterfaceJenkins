@@ -32,4 +32,6 @@ public class DeliveryDocumentItemDto {
     private String purchaseOrderByCustomer;
     @JsonIgnore
     private String productId;
+    @JsonIgnore
+    private String invoiceNumber;
 }

@@ -19,6 +19,8 @@ public class InterfaceSalseOrderDto extends BaseDto {
     private int httpStatus;
     // 에러
     private String exceptions;
+    // MPL id (SAP)
+    private String sapMessageProcessingLogId;
     
     public InterfaceSalseOrderDto(String purchaseOrderByCustomer) {
         super();
@@ -26,7 +28,7 @@ public class InterfaceSalseOrderDto extends BaseDto {
     }
 
     public InterfaceSalseOrderDto(String purchaseOrderByCustomer, String salesOrder, String resultStatus,
-            String resultStatusDetail, int httpStatus, String exceptions) {
+            String resultStatusDetail, int httpStatus, String exceptions, String sapMessageProcessingLogId) {
         super();
         this.purchaseOrderByCustomer = purchaseOrderByCustomer;
         this.salesOrder = salesOrder;
@@ -34,6 +36,7 @@ public class InterfaceSalseOrderDto extends BaseDto {
         this.resultStatusDetail = resultStatusDetail;
         this.httpStatus = httpStatus;
         this.exceptions = exceptions;
+        this.sapMessageProcessingLogId = sapMessageProcessingLogId;
     }
     
 }

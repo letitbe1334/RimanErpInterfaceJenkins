@@ -99,12 +99,13 @@ public class JupiterSalesOrderCancelService {
                             log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
                             try {
                                 log.info("## I/F 테이블 INSERT ##");
-                                ifMapper.insertInterfaceSalesOrderCancel(new InterfaceSalseOrderCancelDto(
+                                ifMapper.saveInterfaceSalesOrderCancel(new InterfaceSalseOrderCancelDto(
                                         bodyParam.getPurchaseOrderByCustomer(),
                                         bodyParam.getSalesOrder(),
                                         clientResponse.getBody().getResultStatus(),
                                         clientResponse.getStatusCodeValue(),
-                                        clientResponse.getBody().getMessage()));
+                                        clientResponse.getBody().getMessage(),
+                                        clientResponse.getBody().getSapMessageProcessingLogId()));
                             } catch (Exception e) {
                                 // I/F Table update시 예외발생시 어떻게 처리할 것인지?
                                 e.printStackTrace();

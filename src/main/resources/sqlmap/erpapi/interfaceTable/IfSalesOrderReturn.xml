@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="biz.riman.erp.batch.mapper.salesOrderReturn.IfSalesOrderReturnMapper">
-    <insert id="insertInterfaceSalesOrderReturn" parameterType="biz.riman.erp.batch.dto.salesOrderReturn.InterfaceSalseOrderReturnDto">
-        /* IfSalesOrderReturn.insertInterfaceSalesOrderReturn */
+    <insert id="saveInterfaceSalesOrderReturn" parameterType="biz.riman.erp.batch.dto.salesOrderReturn.InterfaceSalseOrderReturnDto">
+        /* IfSalesOrderReturn.saveInterfaceSalesOrderReturn */
         INSERT INTO if_sales_order_return
         (
             purchase_order_by_customer
@@ -12,6 +12,7 @@
            ,result_status
            ,http_status
            ,exceptions
+           ,sap_message_processing_log_id
            ,created_datetime
         )
         VALUES (
@@ -22,7 +23,16 @@
            ,#{resultStatus}
            ,#{httpStatus}
            ,#{exceptions}
+           ,#{sapMessageProcessingLogId}
            ,#{createdDatetime}
         )
+            ON DUPLICATE KEY
+        UPDATE 
+               return_order_by_customer = #{returnOrderByCustomer}
+              ,result_status = #{resultStatus}
+              ,http_status = #{httpStatus}
+              ,exceptions = #{exceptions}
+              ,sap_message_processing_log_id = #{sapMessageProcessingLogId}
+              ,modified_datetime = #{modifiedDatetime}
     </insert>
 </mapper>

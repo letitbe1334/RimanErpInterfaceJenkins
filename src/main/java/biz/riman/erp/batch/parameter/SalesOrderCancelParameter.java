@@ -42,7 +42,7 @@ public class SalesOrderCancelParameter {
     }
     
     public String getStartDate() {
-        return this.getDatetime().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return this.getDatetime().minusDays(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     public String getEndDate() {

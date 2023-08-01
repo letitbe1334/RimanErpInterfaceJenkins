@@ -33,29 +33,11 @@ public class UniverseSalesOrderCancelService {
     private IfSalesOrderCancelMapper ifMapper;
 
     private final WebClient localApiClient;
-//    private final WebClient sapApiClient;
-//
-//    String token = "";
-//    MultiValueMap<String, String> myCookies = new LinkedMultiValueMap<String, String>();
-//
-//    private String host = "https://my405068.s4hana.cloud.sap";
-//    private String uri = "/sap/opu/odata/sap/ZAPI_SALES_CANCEL/salesCancel";
-//    private String userName = "Z_SD_TEST_USER";
-//    private String password = "VqiBfhQaQNN}MKyQljnvUocmAzvGw3tNroTaPCiW";
     
     
     @Autowired
     public UniverseSalesOrderCancelService(@Qualifier("oAuth2WebClient") WebClient localApiClient) {
         this.localApiClient = localApiClient;
-
-//        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
-//                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1)) // to unlimited memory size
-//                 .build();
-//        this.sapApiClient  = WebClient
-//            .builder()
-//            .baseUrl(host)
-//            .exchangeStrategies(exchangeStrategies)
-//            .build();
     }
 
     /**
@@ -75,7 +57,7 @@ public class UniverseSalesOrderCancelService {
                 parameter.setSalesOrderId(bodyParam.getSalesOrderId());
                 parameter.setPaymentId(bodyParam.getPaymentId());
 
-                // 주문취소 쿠폰 정보 setting
+                // 주문취소 쿠폰 정보 setting : universe는 쿠폰 X
                 bodyParam.setTo_Pricing(new ArrayList<SalesOrderCancelPricingDto>());
 
                 // 주문취소 상품 정보 setting
@@ -116,12 +98,13 @@ public class UniverseSalesOrderCancelService {
                             log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
                             try {
                                 log.info("## I/F 테이블 INSERT ##");
-                                ifMapper.insertInterfaceSalesOrderCancel(new InterfaceSalseOrderCancelDto(
+                                ifMapper.saveInterfaceSalesOrderCancel(new InterfaceSalseOrderCancelDto(
                                         bodyParam.getPurchaseOrderByCustomer(),
                                         bodyParam.getSalesOrder(),
                                         clientResponse.getBody().getResultStatus(),
                                         clientResponse.getStatusCodeValue(),
-                                        clientResponse.getBody().getMessage()));
+                                        clientResponse.getBody().getMessage(),
+                                        clientResponse.getBody().getSapMessageProcessingLogId()));
                             } catch (Exception e) {
                                 // I/F Table update시 예외발생시 어떻게 처리할 것인지?
                                 e.printStackTrace();
@@ -159,87 +142,4 @@ public class UniverseSalesOrderCancelService {
         
         return response;
     }
-    
-//    public String callSalesOrderCancelSAP(SalesOrderCancelParameter parameter) throws Exception {
-//        String response = new String("");
-//        log.info("## 주문취소 I/F {} ~ {} ##", parameter.getStartDate(), parameter.getEndDate());
-//        log.info("");
-//
-//        getToken();
-//        
-//        log.info("## Param setting ##");
-//        
-//        int repeatCount = 1;
-//        CountDownLatch cdl = new CountDownLatch(repeatCount);
-//        
-//        for (int i = 0; i < repeatCount; i++) {
-//            SalesOrderCancelDto param = new SalesOrderCancelDto(("" + (36 + i)), Arrays.asList(new SalesOrderCancelItemDto("10", "70"), new SalesOrderCancelItemDto("20", "70")));
-//            log.info("## param : {}", param);
-//            
-//            // api 요청
-//            log.info("## api 요청 ##");
-//            sapApiClient
-//                .post()
-//                .uri(uri)
-//                .accept(MediaType.APPLICATION_JSON)
-//                .headers(headers -> {
-//                    headers.add("x-csrf-token", token);
-//                    headers.setBasicAuth(userName, password);
-//                })
-//                .cookies(cookies -> cookies.addAll(myCookies))
-//                .body(BodyInserters.fromValue(param))
-//                .exchangeToMono(clientResponse -> clientResponse.toEntity(String.class))
-//                .doOnSuccess(clientResponse -> {
-//                    log.info("## clientResponse.getStatusCode() : {}", clientResponse.getStatusCode());
-//                    log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
-////                    if (clientResponse.getStatusCode().is5xxServerError()) {
-////                        // 서버 에러
-////                        throw new RuntimeException(clientResponse.getBody());
-////                    } else if (clientResponse.getStatusCode().is4xxClientError()) {
-////                        // client 에러
-////                        throw new RuntimeException(clientResponse.getBody());
-////                    }
-//                })
-//                .subscribe(r -> {
-//                    log.info("## {} result : {}", r.getStatusCode(), r);
-//                    cdl.countDown();
-//                });
-//        }
-//        
-//        cdl.await();
-//        return response;
-//    }
-//    
-//    public void getToken() {
-//        // token 인증
-//        log.info("token 인증");
-//        sapApiClient
-//                .get()
-//                .uri(uri)
-//                .accept(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML)
-//                .headers(headers -> {
-//                    headers.add("x-csrf-token", "fetch");
-//                    headers.setBasicAuth(userName, password);
-//                })
-//                .exchangeToMono(res -> {
-//                    if (res.statusCode().equals(HttpStatus.OK)) {
-//                      for (String key: res.cookies().keySet()) {
-//                          myCookies.put(key, Arrays.asList(res.cookies().get(key).get(0).getValue()));
-//                      }
-//                      List<String> tokens = res.headers().asHttpHeaders().get("x-csrf-token");
-//                        if (tokens != null && tokens.size() > 0) {
-//                            token = tokens.get(0);
-//                            return res.bodyToMono(Map.class);
-//                        } else {
-//                            return res.createException().flatMap(Mono::error);
-//                        }
-//                    } else {
-//                        return res.createException().flatMap(Mono::error);
-//                    }
-//                })
-//                .block();
-//        
-//        log.info("### TOKEN : {}", token);
-//        log.info("### myCookies : {}", myCookies);
-//    }
 }

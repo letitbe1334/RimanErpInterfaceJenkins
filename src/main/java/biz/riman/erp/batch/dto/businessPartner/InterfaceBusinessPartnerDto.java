@@ -17,6 +17,8 @@ public class InterfaceBusinessPartnerDto extends BaseDto {
     private int httpStatus;
     // 에러
     private String exceptions;
+    // MPL id (SAP)
+    private String sapMessageProcessingLogId;
     
     public InterfaceBusinessPartnerDto(String businessPartner) {
         super();
@@ -24,13 +26,14 @@ public class InterfaceBusinessPartnerDto extends BaseDto {
     }
 
     public InterfaceBusinessPartnerDto(String businessPartner, String resultStatus,
-            String saveFlag, int httpStatus, String exceptions) {
+            String saveFlag, int httpStatus, String exceptions, String sapMessageProcessingLogId) {
         super();
         this.businessPartner = businessPartner;
         this.resultStatus = resultStatus;
         this.saveFlag = saveFlag;
         this.httpStatus = httpStatus;
         this.exceptions = exceptions;
+        this.sapMessageProcessingLogId = sapMessageProcessingLogId;
     }
     
 }

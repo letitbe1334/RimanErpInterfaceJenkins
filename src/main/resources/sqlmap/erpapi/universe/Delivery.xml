@@ -3,28 +3,57 @@
 <mapper namespace="biz.riman.erp.batch.mapper.delivery.UniverseDeliveryMapper">
     <select id="getDeliveryDocumentItems" resultType="biz.riman.erp.batch.dto.delivery.DeliveryDocumentItemDto">
     		/* Delivery.getDeliveryDocumentItems */
-        SELECT isoi.sales_order AS ReferenceSDDocument --  ERP 오더 번호
-              ,isoi.sales_order_item AS ReferenceSDDocumentItem -- 품목라인번호
-              ,coalesce(sopp.package_qty * lip.product_qty, lip.product_qty) AS ActualDeliveryQuantity -- 배송수량
-              ,'EA' AS DeliveryQuantityUnit -- 단위
+        SELECT aa.ReferenceSDDocument --  ERP 오더 번호
+              ,aa.ReferenceSDDocumentItem -- 품목라인번호
+              ,sum(aa.ActualDeliveryQuantity) as ActualDeliveryQuantity
+              ,'EA' AS DeliveryQuantityUnit
               /** 부가 정보 */
-              ,so.sales_order_no AS purchaseOrderByCustomer
-              ,coalesce(sopp.product_package_product_id, lip.product_id) AS productId
-          FROM `universe-order`.order_aggregation oa
-         INNER JOIN `universe-order`.sales_order so ON oa.order_no = so.sales_order_no
-         INNER JOIN `universe-order`.sales_order_product sop ON so.sales_order_id = sop.sales_order_id
-         INNER JOIN `universe-order`.logistic_inout li ON so.delivery_no = li.delivery_no
-         INNER JOIN `universe-order`.logistic_inout_product lip ON li.logistic_inout_id = lip.logistic_inout_id 
-                                                               AND sop.product_id = lip.product_id
-         INNER JOIN `erp-system`.if_sales_order_item isoi ON so.sales_order_no = isoi.purchase_order_by_customer 
-                                                         AND sop.product_id = isoi.product_id
-          LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
-         WHERE so.delete_yn = 'N'
-           AND oa.order_work_type = 'SALE'
-           AND oa.order_status = 'DELIVERY_COMPLETED'
-           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_delivery ifd
-                           WHERE so.sales_order_no = ifd.purchase_order_by_customer
-                             AND sop.product_id = ifd.product_id)
-           AND li.due_date between #{startDate} and #{endDate}
+              ,aa.sales_order_no AS ReferenceSDDocument
+              ,aa.productId
+              ,aa.invoice_number --  송장번호
+          FROM (
+                   SELECT isoi.sales_order AS ReferenceSDDocument --  ERP 오더 번호
+                         ,isoi.sales_order_item AS ReferenceSDDocumentItem -- 품목라인번호
+                         ,coalesce(sopp.product_package_product_id, lip.product_id)     as productId
+                         ,coalesce(sopp.package_qty * lip.product_qty, lip.product_qty) as ActualDeliveryQuantity
+                         ,a.sales_order_no
+                         ,a.invoice_number
+                     FROM (
+                             SELECT li.logistic_inout_id
+                                   ,so.sales_order_id
+                                   ,so.sales_order_no
+                                   ,min(inv.invoice_number) as invoice_number
+                               FROM `universe-order`.logistic_inout li
+                              INNER JOIN `universe-order`.invoice inv ON li.logistic_inout_id = inv.logistic_inout_id
+                              INNER JOIN `universe-order`.sales_order so ON li.delivery_no = so.delivery_no 
+                                                                        AND so.delete_yn = 'N'
+                              INNER JOIN `universe-order`.order_aggregation oa ON so.sales_order_no = oa.order_no
+                              WHERE oa.order_work_type = 'SALE'
+                                AND oa.order_status = 'DELIVERY_COMPLETED'
+                                AND li.logistic_inout_id IN (SELECT lii.logistic_inout_id
+                                                               FROM `universe-order`.logistic_inout lii
+                                                              WHERE lii.due_date BETWEEN #{startDate} AND #{endDate})
+                              GROUP BY li.logistic_inout_id
+                                      ,so.sales_order_id
+                                      ,so.sales_order_no
+                         ) a
+                    INNER JOIN `universe-order`.sales_order_product sop ON a.sales_order_id = sop.sales_order_id
+                    INNER JOIN `universe-order`.logistic_inout_product lip ON a.logistic_inout_id = lip.logistic_inout_id 
+                                                                          AND sop.product_id = lip.product_id
+                     LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
+                     /** 인터페이스 테이블 */
+                    INNER JOIN `erp-system`.if_sales_order_item isoi ON a.sales_order_no = isoi.purchase_order_by_customer 
+                                                                    AND coalesce(sopp.product_package_product_id, lip.product_id) = isoi.product_id
+                    WHERE NOT EXISTS(SELECT 1 FROM `erp-system`.if_delivery ifd
+                                      WHERE a.sales_order_no = ifd.purchase_order_by_customer
+                                        AND coalesce(sopp.product_package_product_id, lip.product_id) = ifd.product_id
+                                        AND a.invoice_number = ifd.invoice_number
+                                        AND ifd.result_status != 'F')
+               ) aa
+         GROUP BY aa.ReferenceSDDocument
+                 ,aa.sales_order_no
+                 ,aa.ReferenceSDDocumentItem
+                 ,aa.productId
+                 ,aa.invoice_number
     </select>
 </mapper>

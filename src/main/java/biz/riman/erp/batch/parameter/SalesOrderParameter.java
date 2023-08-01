@@ -2,13 +2,13 @@ package biz.riman.erp.batch.parameter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import biz.riman.erp.batch.job.delivery.JupiterDeliveryJob;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class SalesOrderParameter {
     private String paymentId;
 
     
-    public LocalDateTime getDatetime() {
+    public LocalDateTime getDate() {
     	log.info("## this.datetime : {}", this.datetime);
         if (Objects.isNull(this.datetime) || this.datetime.isBlank()) {
             return LocalDateTime.now();
@@ -61,11 +61,11 @@ public class SalesOrderParameter {
     }
     
     public String getStartDatetime() {
-        return this.getDatetime().withNano(0).minusMinutes(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+        return this.getDate().truncatedTo(ChronoUnit.DAYS).minusHours(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
     }
 
     public String getEndDatetime() {
-        return this.getDatetime().withNano(999999999).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+        return this.getDate().withNano(999999999).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
     }
     
     public SalesOrderParameter(@Value("${mismatch.store.id.universe}") String mismatchStoreUniverse,

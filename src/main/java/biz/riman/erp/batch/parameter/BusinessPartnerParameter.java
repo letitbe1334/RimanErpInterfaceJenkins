@@ -2,6 +2,7 @@ package biz.riman.erp.batch.parameter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -50,11 +51,11 @@ public class BusinessPartnerParameter {
     }
     
     public String getStartDate() {
-        return this.getDatetime().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return this.getDatetime().truncatedTo(ChronoUnit.DAYS).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     public String getEndDate() {
-        return this.getDatetime().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return this.getDatetime().truncatedTo(ChronoUnit.DAYS).minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
     
     public String getStartDatetime() {

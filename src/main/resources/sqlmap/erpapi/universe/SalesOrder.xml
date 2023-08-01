@@ -40,7 +40,10 @@
               ,NULL AS ZRECOM
               ,NULL AS ZGRECOM
               /** 배송비는 총 매출액 99000원 미만인 경우 2500원 발생, 99000이상 배송비 0원 */
-              ,'ZDC1' AS DeliveryType
+              ,CASE
+                    WHEN py.delivery_charge <![CDATA[>]]> 0 THEN 'ZDC1'
+                    ELSE ''
+                END AS DeliveryType -- 배송비 유형
               ,ROUND(py.delivery_charge / 1.1) AS DeliveryRateValue -- 10% 부가세 빼고 소수점 한자리에서 반올림
               /** 부가 정보 */
               ,so.sales_order_id
@@ -56,29 +59,34 @@
            /**
              PAYMENT_COMPLETED(결제완료) : 주문생성
              ORDER_CANCEL(결제취소) : 배치 스케줄 주문생성, 주문취소 JOB이 동시에 도는 경우로 인하여 주문취소 단계이지만 주문생성을 먼저 동작하기 위함
-             DELIVERY_READY(출고대기) : 배치 스케줄 주문생성, 출고 JOB이 동시에 도는 경우로 인하여 출고 단계이지만 주문생성을 먼저 동작하기 위함
+             DELIVERY_READY, DELIVERY_ORDER(출고대기) : 배치 스케줄 주문생성, 출고 JOB이 동시에 도는 경우로 인하여 출고 단계이지만 주문생성을 먼저 동작하기 위함
             */
-           AND oa.order_status IN ('PAYMENT_COMPLETED', 'ORDER_CANCEL', 'DELIVERY_READY')
+           AND oa.order_status IN ('PAYMENT_COMPLETED', 'ORDER_CANCEL', 'DELIVERY_READY', 'DELIVERY_ORDER')
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
-                           WHERE so.sales_order_no = iso.purchase_order_by_customer)
-           <!--AND so.created_datetime between #{startDatetime} and #{endDatetime}-->
-           AND so.sales_order_no = '20221229006121'
+                           WHERE so.sales_order_no = iso.purchase_order_by_customer
+                             AND iso.result_status != 'F')
+           AND so.created_datetime between #{startDatetime} and #{endDatetime}
     </select>
 	
     <select id="getSalesOrderItems" resultType="biz.riman.erp.batch.dto.salesOrder.SalesOrderItemDto">
         /* SalesOrder.getSalesOrderItems */
-        SELECT (row_number() over(order by sop.sales_order_product_id)) * 10 as SalesOrderItem
-              ,coalesce(pd2.product_id, pd.product_id) AS product_id
-              ,coalesce(pd2.product_code, pd.product_code) AS Material
-              ,sum(coalesce(sop.order_qty * sopp.package_qty, sop.order_qty)) AS RequestedQuantity
-              ,'EA' AS RequestedQuantityUnit
-          FROM `universe-order`.sales_order_product sop
-         INNER JOIN `universe-order`.product pd ON sop.product_id = pd.product_id
-          LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
-          LEFT JOIN `universe-order`.product pd2 ON sopp.product_package_product_id = pd2.product_id
-         WHERE sop.sales_order_id = #{salesOrderId}
-         GROUP BY sop.sales_order_id 
-                 ,coalesce(pd2.product_id, pd.product_id)
+        SELECT (row_number() over(order by pi.product_id)) * 10 as SalesOrderItem
+              ,pi.product_id 
+              ,pi.Material
+              ,pi.RequestedQuantity
+              ,'EA' as RequestedQuantityUnit
+              ,'N' as deliveryFlag
+          FROM (
+            SELECT coalesce(pd2.product_id, pd.product_id) AS product_id
+                  ,coalesce(pd2.product_code, pd.product_code) AS Material
+                  ,sum(coalesce(sop.order_qty * sopp.package_qty, sop.order_qty)) AS RequestedQuantity
+              FROM `universe-order`.sales_order_product sop
+             INNER JOIN `universe-order`.product pd ON sop.product_id = pd.product_id
+              LEFT JOIN `universe-order`.sales_order_product_package sopp ON sop.sales_order_product_id = sopp.sales_order_product_id
+              LEFT JOIN `universe-order`.product pd2 ON sopp.product_package_product_id = pd2.product_id
+             WHERE sop.sales_order_id = #{salesOrderId}
+           ) pi
+         GROUP BY pi.product_id
     </select>
 	
     <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">

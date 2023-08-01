@@ -27,11 +27,11 @@ public class SalesOrderReturnDto {
     /**
      * 배송비
      */
-    @JsonProperty(value = "ConditionType")
+    @JsonIgnore
     private String ConditionType;
-    @JsonProperty(value = "ConditionRateValue")
+    @JsonIgnore
     private String ConditionRateValue;
-    @JsonProperty(value = "ConditionCurrency")
+    @JsonIgnore
     private String ConditionCurrency;
     
 

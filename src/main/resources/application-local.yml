@@ -7,21 +7,18 @@ spring:
             dbms: erpapi
             driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
             driver: com.mysql.cj.jdbc.Driver
-            jdbc-url: jdbc:log4jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
+            jdbc-url: ${JDBC_URL}
+            username: ${DB_USERNAME}
+            password: ${DB_PASSWORD}
+#            jdbc-url: jdbc:log4jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
 #            jdbc-url: jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
-            username: andami_dhkim
-            password: Andami34!
+#            username: andami_dhkim
+#            password: Andami34!
             hikary:
               maximum-pool-size: 10
               connection-test-query: SELECT 1
               minimum-idle: 5
               connection-timeout: 100000
-#            driver: org.mariadb.jdbc.Driver
-#            jdbc-url: jdbc:mariadb://psmtest.cqjjk1dwdjyl.ap-northeast-2.rds.amazonaws.com:3306/psm?allowMultiQueries=true&amp;useUnicode=yes&amp;characterEncoding=UTF-8&amp;autoReconnect=true
-#            username: admin
-#            password: psm2022!
-    #        mapper-locations: classpath:sqlmap/**/*.xml
-    #        mybatis-setting-locations: classpath:sqlmap/sqlmap-config.xml
     security:
         oauth2:
             client:

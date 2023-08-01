@@ -36,7 +36,6 @@ public class BusinessPartnerTest {
             
             Map<String, JobParameter> jobParametersMap = new HashMap<>();
             jobParametersMap.put("date", new JobParameter(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"))));
-//            jobParametersMap.put("date", new JobParameter("2023-07-11 18:20:33"));
             jobParametersMap.put("job", new JobParameter("SyncBusinessPartner"));
             JobParameters parameters = new JobParameters(jobParametersMap);
     

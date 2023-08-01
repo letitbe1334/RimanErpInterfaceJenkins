@@ -9,21 +9,21 @@
               ,'2' AS "BusinessPartnerCategory"
               ,'KO' AS "Language"
               ,CASE 
-                    WHEN STATUS = 'ACTIVATED' THEN false
+                    WHEN S.STATUS = 'ACTIVATED' THEN false
                     ELSE true
                 END AS "IsMarkedForArchiving"
-              /** 주소 */
-              ,'KR' AS "Country"
-              ,TRIM(SUBSTRING_INDEX(S.address1, ' ', 1)) AS "CityName"
-              ,TRIM(SUBSTRING(S.address1, INSTR(S.address1, ' '), 60)) AS "StreetName"
-              ,S.address2 AS "HouseNumber"
-              ,S.ZIP_CD AS "PostalCode"
-              ,'KO' AS "AddressLanguage"
               <!--,'' AS "ZTEMP11"
               ,'' AS "ZTEMP12"
               ,'' AS "ZTEMP13"
               ,'' AS "ZTEMP14"
               ,'' AS "ZTEMP15"-->
+              /** 주소 */
+              ,'KR' AS "Country"
+              ,TRIM(SUBSTRING_INDEX(S.address1, ' ', 1)) AS "CityName"
+              ,TRIM(SUBSTRING(S.address1, INSTR(S.address1, ' '), 60)) AS "StreetName"
+              ,TRIM(SUBSTRING(S.address2, 1, 10)) AS "HouseNumber"
+              ,S.ZIP_CD AS "PostalCode"
+              ,'KO' AS "AddressLanguage"
               /** 고객사 판매영역 */
               ,'3100' AS "SalesOrganization"
               ,CASE 
@@ -44,7 +44,7 @@
               ,'D001' AS "CustomPaymentTerms"
               /** 세금 */
               ,'KR2' AS "BPTaxType"
-              ,S.business_no AS "BPTaxNumber"
+              ,REPLACE(S.business_no, '-', '') AS "BPTaxNumber"
               /** 은행 */
               ,'01' AS "BankIdentification"
               ,'KR' AS "BankCountryKey"
@@ -63,19 +63,7 @@
           FROM `universe-member`.TB_USER U 
          INNER JOIN `universe-member`.TB_STORE S ON U.user_seq_no = S.user_seq_no
           LEFT JOIN `universe-member`.TB_STORE PS ON S.store_seq_no_parent = PS.STORE_SEQ_NO
-         WHERE U.user_id IN ('INC11197')
-         -- 수정일이 있더라도 데이터가 erp에 없음으로 생성으로 넘길 수 있도록 처리
-         <!--<where>2
-            <choose>
-                <when test='"C".equals(saveFlag)'>
-                  
-                  AND DATE_FORMAT(S.CREATED_DT, '%y-%m-%d') BETWEEN #{startDate} AND #{endDate}
-                </when>
-                <otherwise>
-                  AND S.MODIFIED_DT BETWEEN #{startDatetime} AND #{endDatetime}
-                </otherwise>
-            </choose>
-         </where>-->
+         WHERE U.user_id = 'adadsad'
     </select>
     
     <select id="getBusinessPartnerRolses" resultType="biz.riman.erp.batch.dto.businessPartner.BusinessPartnerRoleDto">

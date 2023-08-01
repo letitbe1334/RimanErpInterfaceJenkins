@@ -84,6 +84,7 @@ public class BusinessPartnerCreateService {
                 bodyParams.add(bodyParam);
             }
         }
+        
         return bodyParams;
     }
 
@@ -102,7 +103,7 @@ public class BusinessPartnerCreateService {
                 localApiClient
                     .post()
                     .uri("/http/cm/zst_bp_customer_create")
-                    .accept(MediaType.APPLICATION_JSON) // , MediaType.APPLICATION_XML
+                    .accept(MediaType.APPLICATION_JSON)
                     .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId("riman"))
                     .headers(headers -> {
                         headers.add("User-Agent", "Other");
@@ -119,7 +120,8 @@ public class BusinessPartnerCreateService {
                                     clientResponse.getBody().getResultStatus(),
                                     "C",
                                     clientResponse.getStatusCodeValue(),
-                                    clientResponse.getBody().getMessage()));
+                                    clientResponse.getBody().getMessage(),
+                                    clientResponse.getBody().getSapMessageProcessingLogId()));
                         } catch (Exception e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();

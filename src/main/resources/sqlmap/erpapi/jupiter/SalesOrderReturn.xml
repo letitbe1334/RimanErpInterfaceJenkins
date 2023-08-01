@@ -15,12 +15,9 @@
               ,CASE 
                     WHEN ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount > 0 THEN 'ZRDD' 
                     ELSE NULL 
-                END AS ConditionType -- 배송차감액
-              ,ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount as ConditionRateValue -- 배송차감액
-              ,CASE 
-                    WHEN ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount > 0 THEN 'KRW' 
-                    ELSE NULL 
-                END AS ConditionCurrency -- 통화
+                END AS ConditionType -- 가격유형
+              ,ROUND(ros.delivery_fee_refund_amount + ros.return_delivery_fee_amount / 1.1) as ConditionRateValue -- 배송차감액
+              ,'KRW' AS ConditionCurrency -- 통화
           FROM `jupiter-order`.return_order ro
          INNER JOIN `jupiter-order`.return_order_request ror  ON ro.return_order_id = ror.return_order_id
          INNER JOIN `jupiter-order`.return_order_sale ros ON ro.return_order_id = ros.return_order_id
@@ -33,6 +30,10 @@
                                                AND cm.code_group_code = 'RETURN_REMARK'
          WHERE ro.delete_yn = 'N'
            AND ro.return_order_status = 'RETURN_COMPLETE'
+           AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_return isor
+                           WHERE so.sales_order_number = isor.purchase_order_by_customer
+                             AND ro.return_order_number = isor.return_order_by_customer
+                             AND isor.result_status != 'F')
            AND DATE_FORMAT(ro.return_order_completion_datetime, '%y-%m-%d') between #{startDate} and #{endDate}
   	</select>
   	
@@ -40,21 +41,40 @@
     		/* SalesOrderReturn.getSalesOrderReturnItems */
         SELECT isoi.sales_order AS ReferenceSDDocument
               ,isoi.sales_order_item AS ReferenceSDDocumentItem
-              ,rop.quantity as RequestedQuantity
+              ,item.RequestedQuantity
               ,cm.attr_val1 AS SDDocumentReason
               ,'100' AS ReturnsRefundExtent
               ,'P' AS ReturnsRefundProcgMode
               ,'0001' AS CustRetItmFollowUpActivity
-          FROM `jupiter-order`.return_order_product rop
-         INNER JOIN `jupiter-order`.return_order ro ON rop.return_order_id = ro.return_order_id 
+              /** 부가정보 */
+              ,item.product_id
+          FROM (
+            SELECT item_under.return_order_id
+                  ,item_under.sales_order_number
+                  ,item_under.product_id
+                  ,SUM(item_under.RequestedQuantity) AS RequestedQuantity
+              FROM (
+                SELECT rop.return_order_id
+                      ,so.sales_order_number
+                      ,coalesce(pk_pd.product_id, rop.product_id)  as product_id
+                      ,coalesce(pk.count * rop.quantity, rop.quantity)  as RequestedQuantity
+                  FROM `jupiter-order`.return_order ro
+                 INNER JOIN `jupiter-order`.sales_order so ON ro.sales_order_id = so.sales_order_id
+                 INNER JOIN `jupiter-order`.return_order_product rop ON ro.return_order_id = rop.return_order_id
+                  LEFT JOIN `jupiter-product`.package pk on rop.product_id = pk.product_id
+                  LEFT JOIN `jupiter-product`.product pk_pd on pk.composite_product_id = pk_pd.product_id
+                 WHERE rop.delete_yn = 'N'
+                   AND rop.return_order_id = #{return_order_id}
+              ) item_under
+             GROUP BY item_under.return_order_id
+                     ,item_under.sales_order_number
+                     ,item_under.product_id
+          ) item
          INNER JOIN `jupiter-order`.return_order_request ror  ON ro.return_order_id = ror.return_order_id
-         INNER JOIN `jupiter-order`.sales_order_product sopd ON ro.sales_order_id = sopd.sales_order_id
-         INNER JOIN `jupiter-product`.product pd ON sopd.product_id = pd.product_id
-         INNER JOIN `erp-system`.if_sales_order_item isoi ON sopd.sales_order_product_id = isoi.sales_order_product_id
+         INNER JOIN `erp-system`.if_sales_order_item isoi ON item.sales_order_number = isoi.purchase_order_by_customer 
+                                                         AND item.product_id = isoi.product_id 
           LEFT JOIN `erp-system`.code_master cm ON ror.return_order_reason_type = cm.code
                                                AND cm.code_group_code = 'RETURN_REMARK'
-         WHERE rop.delete_yn = 'N'
-           AND rop.return_order_id = #{return_order_id}
   	</select>
     
     <select id="getSalesOrderReturnPayments" resultType="biz.riman.erp.batch.dto.salesOrderReturn.SalesOrderReturnPaymentDto">

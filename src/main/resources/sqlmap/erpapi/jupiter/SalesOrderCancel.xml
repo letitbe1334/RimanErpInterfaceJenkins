@@ -16,8 +16,9 @@
          WHERE so.delete_yn = 'N'
            AND so.sales_order_status = 'SALES_ORDER_CANCEL'
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order_cancel isoc
-                           WHERE so.sales_order_number = isoc.purchase_order_by_customer)
-           <!--AND DATE_FORMAT(so.cancel_datetime, '%y-%m-%d') between #{startDate} and #{endDate}--> --   전일 ~ 당일
+                           WHERE so.sales_order_number = isoc.purchase_order_by_customer
+                             AND isoc.result_status != 'F')
+           AND DATE_FORMAT(so.cancel_datetime, '%y-%m-%d') between #{startDate} and #{endDate} --   전일 ~ 당일
     </select>
 	
     <select id="getSalesOrderCancelItems" resultType="biz.riman.erp.batch.dto.salesOrderCancel.SalesOrderCancelItemDto">

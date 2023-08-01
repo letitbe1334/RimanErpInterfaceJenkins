@@ -63,7 +63,7 @@ public class UniverseDeliveryService {
             localApiClient
                 .post()
                 .uri("/http/sd/zct_do_pick")
-                .accept(MediaType.APPLICATION_JSON) // , MediaType.APPLICATION_XML
+                .accept(MediaType.APPLICATION_JSON)
                 .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId("riman"))
                 .headers(headers -> {
                     headers.add("User-Agent", "Other");
@@ -74,10 +74,11 @@ public class UniverseDeliveryService {
                     log.info("## clientResponse.getStatusCode() : {}", clientResponse.getStatusCode());
                     log.info("## clientResponse.getBody() : {}", clientResponse.getBody());
                     try {
-                        ifMapper.insertInterfaceDeliveries(delivery.getTo_Item(), new InterfaceDeliveryDto(
+                        ifMapper.saveInterfaceDeliveries(delivery.getTo_Item(), new InterfaceDeliveryDto(
                                 clientResponse.getBody().getResultStatus(),
                                 clientResponse.getStatusCodeValue(),
-                                clientResponse.getBody().getMessage()));
+                                clientResponse.getBody().getMessage(),
+                                clientResponse.getBody().getSapMessageProcessingLogId()));
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();

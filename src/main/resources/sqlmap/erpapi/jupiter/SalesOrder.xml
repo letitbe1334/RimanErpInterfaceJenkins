@@ -16,7 +16,6 @@
                     WHEN so.sales_order_type = 'GENERAL_ORDER' THEN 'ZOM'   --  일반주문
                     ELSE 'ZSO'  --  정기구매
                 END AS ZSalesType
-              -- ,'INC11485' AS SoldToParty
               ,bl.belong_store_login_id AS SoldToParty
               ,DATE_FORMAT(IFNULL(ob.outbound_datetime, so.approval_datetime), '%Y-%m-%dT%H:%i:%s') AS RequestedDeliveryDate    --  미 출고지시건들은 배송요청일 없음
               ,DATE_FORMAT(so.order_datetime, '%Y-%m-%dT%H:%i:%s') AS CustomerPurchaseOrderDate
@@ -68,11 +67,12 @@
              (출고지시) : 녹여져 있음으로 관여 X
             */
            AND CASE WHEN so.sales_order_status = 'SALES_ORDER_CANCEL' THEN 1
-                    WHEN so.sales_order_status = 'SALES_ORDER_COMPLETE' AND so.outbound_yn = 'N' THEN 1  --  변경 출고전 결제완료 주문
+                    WHEN so.sales_order_status = 'SALES_ORDER_COMPLETE' THEN 1  --  변경 출고전 결제완료 주문
                     ELSE 0
                 END = 1
            AND NOT EXISTS(SELECT 1 FROM `erp-system`.if_sales_order iso
-                           WHERE so.sales_order_number = iso.purchase_order_by_customer)
+                           WHERE so.sales_order_number = iso.purchase_order_by_customer
+                             AND iso.result_status != 'F')
            AND so.order_datetime between #{startDatetime} and #{endDatetime}
   	</select>
 	
@@ -100,8 +100,7 @@
              WHERE sopd.delete_yn = 'N'
                AND so.sales_order_id = #{salesOrderId}
           ) pi
-         GROUP BY pi.sales_order_id 
-                 ,pi.product_id
+         GROUP BY pi.product_id
     </select>
 	
     <select id="getSalesOrderPayments" resultType="biz.riman.erp.batch.dto.salesOrder.PaymentDto">

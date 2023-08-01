@@ -1,33 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="biz.riman.erp.batch.mapper.delivery.IfDeliveryMapper">
-    <insert id="insertInterfaceDeliveries" parameterType="biz.riman.erp.batch.dto.delivery.InterfaceDeliveryDto">
-        /* IfDelivery.insertInterfaceDeliveries */
+    <insert id="saveInterfaceDeliveries" parameterType="biz.riman.erp.batch.dto.delivery.InterfaceDeliveryDto">
+        /* IfDelivery.saveInterfaceDeliveries */
         INSERT INTO if_delivery
         (
             purchase_order_by_customer
            ,product_id
+           ,invoice_number
            ,sales_order
            ,sales_order_item
            ,actual_delivery_quantity
            ,result_status
            ,http_status
            ,exceptions
+           ,sap_message_processing_log_id
            ,created_datetime
         )
-        VALUES
-        <foreach item="item" collection="items" separator=",">
-        (
-            #{item.purchaseOrderByCustomer}
-           ,#{item.productId}
-           ,#{item.ReferenceSDDocument}
-           ,#{item.ReferenceSDDocumentItem}
-           ,#{item.ActualDeliveryQuantity}
-           ,#{delivery.resultStatus}
-           ,#{delivery.httpStatus}
-           ,#{delivery.exceptions}
-           ,#{delivery.createdDatetime}
-        )
-        </foreach>
+        SELECT *
+          FROM (
+            <foreach item="item" collection="items" separator=" UNION ALL ">
+            SELECT #{item.purchaseOrderByCustomer} AS purchase_order_by_customer
+                  ,#{item.productId} AS product_id
+                  ,#{item.invoiceNumber} AS invoice_number
+                  ,#{item.ReferenceSDDocument} AS sales_order
+                  ,#{item.ReferenceSDDocumentItem} AS sales_order_item
+                  ,#{item.ActualDeliveryQuantity} AS actual_delivery_quantity
+                  ,#{delivery.resultStatus} AS result_status
+                  ,#{delivery.httpStatus} AS http_status
+                  ,#{delivery.exceptions} AS exceptions
+                  ,#{delivery.createdDatetime} AS created_datetime
+                  ,#{delivery.sapMessageProcessingLogId} AS sap_message_processing_log_id
+                  ,#{item.modifiedDatetime} AS modified_datetime
+            </foreach>
+          ) item
+            ON DUPLICATE KEY
+        UPDATE 
+               result_status = item.result_status
+              ,http_status = item.http_status
+              ,exceptions = item.exceptions
+              ,sap_message_processing_log_id = item.sap_message_processing_log_id
+              ,modified_datetime = item.modified_datetime
     </insert>
 </mapper>

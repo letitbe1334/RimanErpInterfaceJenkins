@@ -7,10 +7,9 @@ spring:
             dbms: erpapi
             driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
             driver: com.mysql.cj.jdbc.Driver
-            jdbc-url: jdbc:log4jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
-#            jdbc-url: jdbc:mysql://development-combine-domain-db.cfizanbwsdcy.ap-northeast-2.rds.amazonaws.com:3306/erp-system?&serverTimezone=UTC&autoReconnect=true&allowMultiQueries=true&characterEncoding=UTF-8
-            username: andami_dhkim
-            password: Andami34!
+            jdbc-url: ${JDBC_URL}
+            username: ${DB_USERNAME}
+            password: ${DB_PASSWORD}
             hikary:
               maximum-pool-size: 10
               connection-test-query: SELECT 1

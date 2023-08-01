@@ -6,5 +6,5 @@ import biz.riman.erp.batch.dto.salesOrderReturn.InterfaceSalseOrderReturnDto;
 @MapperConnection
 public interface IfSalesOrderReturnMapper {
     // I/F 주문 테이블 INSERT
-    int insertInterfaceSalesOrderReturn(InterfaceSalseOrderReturnDto model) throws Exception;
+    int saveInterfaceSalesOrderReturn(InterfaceSalseOrderReturnDto model) throws Exception;
 }

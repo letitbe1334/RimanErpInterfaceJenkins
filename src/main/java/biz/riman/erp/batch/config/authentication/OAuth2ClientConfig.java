@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.InMemoryReactiveOAuth2AuthorizedClientService;
@@ -17,6 +18,8 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 @Slf4j
 @Configuration
@@ -70,9 +73,16 @@ public class OAuth2ClientConfig {
                  .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1)) // to unlimited memory size
                  .build();
         
+        ConnectionProvider connectionProvider = ConnectionProvider.builder("myConnectionPool")
+                .maxConnections(1000)
+                .pendingAcquireMaxCount(-1)
+                .build();
+        ReactorClientHttpConnector clientHttpConnector = new ReactorClientHttpConnector(HttpClient.create(connectionProvider));
+        
         return WebClient.builder()
                 .baseUrl(endPoint)
                 .filter(oauth)
+                .clientConnector(clientHttpConnector)
                 .exchangeStrategies(exchangeStrategies)
                 .exchangeStrategies(
                         ExchangeStrategies.builder()
